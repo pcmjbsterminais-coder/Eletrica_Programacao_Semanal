@@ -37,14 +37,29 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.7); }
         .drag-over { border: 2px dashed #0284c7 !important; background-color: rgba(2, 132, 199, 0.08) !important; }
         .dragging { opacity: 0.5; transform: scale(0.98); }
+
+        /* Estilos Exclusivos para Impressão em PDF */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-os, #printable-os * { visibility: visible; }
+            #printable-os {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: #000 !important;
+                background: #fff !important;
+                padding: 20px;
+            }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col custom-scrollbar">
 
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <!-- Brand Title & Connection Status Badges -->
                 <div class="flex items-center space-x-3">
                     <div class="bg-gradient-to-tr from-sky-500 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-sky-500/20">
                         <i class="fa-solid fa-wrench text-white text-xl"></i>
@@ -54,17 +69,12 @@
                             <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                                 ELÉTRICA INFRA <span class="text-xs bg-sky-500/20 text-sky-400 font-semibold px-2 py-0.5 rounded-full border border-sky-500/30">Programação Semanal</span>
                             </h1>
-                            
-                            <!-- Indicators for Connection and Mode -->
                             <div class="flex items-center gap-1.5 ml-1">
-                                <!-- Connection Status -->
                                 <span id="status-cloud-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="status-cloud-dot"></span>
                                     <i class="fa-solid fa-cloud text-[11px]" id="status-cloud-icon"></i>
                                     <span id="status-cloud-text">Nuvem Conectada</span>
                                 </span>
-
-                                <!-- Operation Mode -->
                                 <span id="status-mode-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-700 text-slate-300 border border-slate-600">
                                     <i class="fa-solid fa-server text-[9px]"></i>
                                     <span id="status-mode-text">Modo Nuvem</span>
@@ -75,41 +85,34 @@
                     </div>
                 </div>
 
-                <!-- Global KPI Summary Banner -->
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-900/80 p-2 rounded-xl border border-slate-700/60 text-center text-xs">
                     <div class="p-2 rounded-lg bg-slate-800/80">
                         <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Programadas</span>
                         <span id="kpi-global-prog" class="text-lg font-bold text-sky-400">0</span>
-                        <span class="text-[10px] text-slate-500 block">OS Filtradas</span>
                     </div>
                     <div class="p-2 rounded-lg bg-slate-800/80">
                         <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Concluídas</span>
                         <span id="kpi-global-conc" class="text-lg font-bold text-emerald-400">0</span>
-                        <span class="text-[10px] text-slate-500 block">Finalizadas</span>
                     </div>
                     <div class="p-2 rounded-lg bg-slate-800/80">
                         <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Pendentes</span>
                         <span id="kpi-global-pend" class="text-lg font-bold text-amber-400">0</span>
-                        <span class="text-[10px] text-slate-500 block">Em aberto</span>
                     </div>
                     <div class="p-2 rounded-lg bg-slate-800/80">
                         <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Total Homem-Hora</span>
                         <span id="kpi-global-horas" class="text-lg font-bold text-purple-400">0 HH</span>
-                        <span class="text-[10px] text-slate-500 block">Horas Alocadas</span>
                     </div>
                     <div class="p-2 rounded-lg bg-slate-800/80 col-span-2 sm:col-span-1">
                         <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Aderência %</span>
                         <span id="kpi-global-efic" class="text-lg font-bold text-indigo-400">0%</span>
-                        <span class="text-[10px] text-slate-500 block">Taxa de Conclusão</span>
                     </div>
                 </div>
 
-                <!-- Action Controls -->
                 <div class="flex items-center gap-2">
                     <button id="btn-nova-os" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1.5 transition shadow-lg shadow-sky-600/20 active:scale-95">
                         <i class="fa-solid fa-plus text-xs"></i> Nova OS
                     </button>
-                    <button id="btn-export-csv" title="Exportar Relatório em CSV" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 transition">
+                    <button id="btn-export-csv" title="Exportar Relatório CSV" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 transition">
                         <i class="fa-solid fa-file-csv text-emerald-400"></i>
                     </button>
                     <button id="btn-export-json" title="Exportar Backup JSON" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 transition">
@@ -124,10 +127,8 @@
         </div>
     </header>
 
-    <section class="bg-slate-800/50 border-b border-slate-700/80 px-4 py-3 sticky top-[69px] z-20 backdrop-blur-md">
+    <section class="bg-slate-800/50 border-b border-slate-700/80 px-4 py-3 sticky top-[69px] z-20 backdrop-blur-md no-print">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            
-            <!-- View Selector Tabs -->
             <div class="flex p-1 bg-slate-900/90 rounded-lg border border-slate-700/80 self-start md:self-auto">
                 <button id="tab-semanal" class="px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow">
                     <i class="fa-solid fa-calendar-week"></i> Agenda Semanal
@@ -137,20 +138,14 @@
                 </button>
             </div>
 
-            <!-- Advanced Filters -->
             <div class="flex flex-wrap items-center gap-2 flex-1 max-w-3xl justify-end">
-                <!-- Search Box -->
                 <div class="relative flex-1 min-w-[160px] max-w-xs">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" id="filter-search" placeholder="Buscar OS, Tag, Atividade..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 placeholder-slate-500">
                 </div>
-
-                <!-- Technician Filter -->
                 <select id="filter-tecnico" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
                     <option value="">Todos os Técnicos</option>
                 </select>
-
-                <!-- Priority Filter -->
                 <select id="filter-prioridade" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
                     <option value="">Todas Prioridades</option>
                     <option value="Crítica">Crítica</option>
@@ -158,8 +153,6 @@
                     <option value="Média">Média</option>
                     <option value="Baixa">Baixa</option>
                 </select>
-
-                <!-- Type Filter -->
                 <select id="filter-tipo" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
                     <option value="">Todos os Tipos</option>
                     <option value="Preventiva">Preventiva</option>
@@ -168,7 +161,6 @@
                     <option value="Melhoria">Melhoria</option>
                     <option value="Inspeção">Inspeção/5S</option>
                 </select>
-
                 <button id="btn-limpar-filtros" title="Limpar Filtros" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-300">
                     <i class="fa-solid fa-filter-circle-xmark"></i>
                 </button>
@@ -176,15 +168,13 @@
         </div>
     </section>
 
-    <main class="flex-1 p-4 overflow-x-auto">
-        <div id="board-container" class="flex gap-4 min-w-max pb-4 items-start">
-            <!-- Dynamic Kanban Columns populated by JS -->
-        </div>
+    <main class="flex-1 p-4 overflow-x-auto no-print">
+        <div id="board-container" class="flex gap-4 min-w-max pb-4 items-start"></div>
     </main>
 
     <!-- Modal Form -->
-    <div id="modal-os" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden my-8">
+    <div id="modal-os" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto no-print">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden my-8">
             <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-700 bg-slate-850">
                 <h3 id="modal-title" class="font-bold text-slate-100 flex items-center gap-2">
                     <i class="fa-solid fa-file-pen text-sky-400"></i> Cadastrar Nova Ordem de Serviço
@@ -203,41 +193,56 @@
                         <input type="text" id="os-numero" required placeholder="OS-2026-001" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Tag do Equipamento *</label>
-                        <input type="text" id="os-tag" required placeholder="EQP-BOMBA-02" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Tag do Equipamento</label>
+                        <input type="text" id="os-tag" placeholder="EQP-BOMBA-02" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                 </div>
 
-                <!-- Multi-Technician Allocation Section -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1 flex justify-between items-center">
-                        <span><i class="fa-solid fa-users-gear text-sky-400 mr-1"></i> Equipe / Técnicos Alocados *</span>
-                        <span id="hh-preview-modal" class="text-[11px] font-mono text-purple-300">0.0 HH Totais</span>
-                    </label>
-                    
-                    <!-- Selected Technicians Container -->
-                    <div id="tecnicos-selected-container" class="flex flex-wrap items-center gap-1.5 p-2 bg-slate-900 border border-slate-700 rounded-lg min-h-[42px] mb-2">
-                        <!-- Chips inserted via JS -->
-                    </div>
+<!-- Seção: Múltiplos Técnicos com Horários de Execução -->
+<div class="border border-slate-700/80 bg-slate-900/50 p-3 rounded-lg space-y-3">
+    <div class="flex justify-between items-center">
+        <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-users-gear text-sky-400"></i> Técnicos e Horários de Execução
+        </label>
+        <span id="hh-preview-modal" class="text-[11px] font-mono text-purple-300">0.0 HH Totais</span>
+    </div>
 
-                    <!-- Input and Quick Add Options -->
-                    <div class="flex gap-2">
-                        <input type="text" id="input-add-tecnico" placeholder="Digite o nome do técnico e pressione Enter..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
-                        <button type="button" id="btn-add-tecnico" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">
-                            <i class="fa-solid fa-user-plus mr-1"></i> Adicionar
-                        </button>
-                    </div>
+    <!-- Lista de técnicos adicionados -->
+    <div id="tecnicos-execucao-container" class="space-y-2">
+        <!-- Itens dinâmicos via JS -->
+    </div>
 
-                    <!-- Quick Suggestions Chips -->
-                    <div class="mt-2 flex flex-wrap items-center gap-1 text-[10px]">
-                        <span class="text-slate-400">Sugestões rápidas:</span>
-                        <button type="button" onclick="addTecnicoChip('Elan')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Elan</button>
-                        <button type="button" onclick="addTecnicoChip('Willian')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Willian</button>
-                        <button type="button" onclick="addTecnicoChip('François')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ François</button>
-                        <button type="button" onclick="addTecnicoChip('José Xavier')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ José Xavier</button>
-                        <button type="button" onclick="addTecnicoChip('Murilo')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Murilo</button>
-                    </div>
-                </div>
+    <!-- Formulário de adição ajustado -->
+    <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 space-y-2">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+            <!-- Nome do Técnico (4 colunas no desktop) -->
+            <div class="sm:col-span-4">
+                <label class="block text-[10px] text-slate-400 mb-1 font-medium">Nome do Técnico</label>
+                <input type="text" id="input-tec-nome" placeholder="Ex: João Silva" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+            </div>
+
+            <!-- Início da Execução (3 colunas) -->
+            <div class="sm:col-span-3">
+                <label class="block text-[10px] text-slate-400 mb-1 font-medium">Início</label>
+                <input type="datetime-local" id="input-tec-inicio" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-[11px] text-slate-100 focus:outline-none focus:border-sky-500" title="Início da Execução">
+            </div>
+
+            <!-- Fim da Execução (3 colunas) -->
+            <div class="sm:col-span-3">
+                <label class="block text-[10px] text-slate-400 mb-1 font-medium">Fim</label>
+                <input type="datetime-local" id="input-tec-fim" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-[11px] text-slate-100 focus:outline-none focus:border-sky-500" title="Fim da Execução">
+            </div>
+
+            <!-- Botão Adicionar (2 colunas no desktop / largura total no mobile) -->
+            <div class="sm:col-span-2">
+                <button type="button" id="btn-add-tecnico-exec" class="w-full bg-sky-600 hover:bg-sky-500 text-white rounded px-2 py-1.5 text-xs font-medium transition flex items-center justify-center gap-1 shadow">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Adicionar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Título da Atividade *</label>
@@ -246,7 +251,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Descrição Detalhada</label>
-                    <textarea id="os-descricao" rows="2" placeholder="Detalhes técnicos, procedimentos específicos de segurança..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500"></textarea>
+                    <textarea id="os-descricao" rows="2" placeholder="Detalhes técnicos, procedimentos de segurança..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -299,36 +304,40 @@
                     </select>
                 </div>
 
-                <!-- Checklist Section inside Modal -->
+                <!-- Nova Seção: Campo de Assinatura Digital -->
+                <div class="border-t border-slate-700/80 pt-3">
+                    <label class="block text-xs font-semibold text-slate-300 mb-2 flex justify-between items-center">
+                        <span><i class="fa-solid fa-signature text-emerald-400 mr-1"></i> Assinatura do Responsável / Validador</span>
+                        <button type="button" id="btn-clear-signature" class="text-[10px] text-rose-400 hover:underline">Limpar Assinatura</button>
+                    </label>
+                    <div class="bg-white rounded-lg p-1">
+                        <canvas id="signature-pad" class="w-full h-28 border border-slate-300 rounded cursor-crosshair bg-white"></canvas>
+                    </div>
+                </div>
+
+                <!-- Checklist Section -->
                 <div class="border-t border-slate-700/80 pt-3">
                     <label class="block text-xs font-semibold text-slate-300 mb-2 flex justify-between items-center">
                         <span><i class="fa-solid fa-list-check text-sky-400 mr-1"></i> Checklist de Tarefas Internas</span>
                         <span id="checklist-modal-count" class="text-[10px] text-slate-400">0/0</span>
                     </label>
                     <div class="flex gap-2 mb-2">
-                        <input type="text" id="input-new-check-item" placeholder="Adicionar sub-tarefa (ex: Bloqueio LOTO)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <input type="text" id="input-new-check-item" placeholder="Adicionar sub-tarefa..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
                         <button type="button" id="btn-add-check-item" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">Adicionar</button>
                     </div>
                     <ul id="modal-checklist-items" class="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar"></ul>
                 </div>
 
-                <!-- Observations/History Log inside Modal -->
-                <div class="border-t border-slate-700/80 pt-3">
-                    <label class="block text-xs font-semibold text-slate-300 mb-2">
-                        <i class="fa-solid fa-comments text-amber-400 mr-1"></i> Histórico / Apontamentos Técnicos
-                    </label>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="input-new-history" placeholder="Adicionar apontamento ou observação..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
-                        <button type="button" id="btn-add-history" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">Apontar</button>
-                    </div>
-                    <div id="modal-history-list" class="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-700/50"></div>
-                </div>
-
                 <!-- Actions -->
                 <div class="border-t border-slate-700/80 pt-4 flex items-center justify-between">
-                    <button type="button" id="btn-delete-os" class="bg-rose-900/40 hover:bg-rose-900/80 text-rose-300 border border-rose-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
-                        <i class="fa-solid fa-trash mr-1"></i> Excluir OS
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="btn-delete-os" class="bg-rose-900/40 hover:bg-rose-900/80 text-rose-300 border border-rose-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Excluir
+                        </button>
+                        <button type="button" id="btn-print-os" class="bg-indigo-900/40 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
+                            <i class="fa-solid fa-print mr-1"></i> Imprimir OS (PDF)
+                        </button>
+                    </div>
                     <div class="flex items-center gap-2 ml-auto">
                         <button type="button" id="btn-cancel-modal" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium transition">Cancelar</button>
                         <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white px-5 py-2 rounded-lg text-xs font-medium transition shadow-lg shadow-sky-600/20">Salvar Ordem</button>
@@ -338,8 +347,11 @@
         </div>
     </div>
 
+    <!-- Template para Impressão de PDF (Oculto na tela principal) -->
+    <div id="printable-os" class="hidden"></div>
+
     <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-sky-500/50 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-sky-500/50 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 no-print">
         <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
         <span id="toast-message" class="text-xs font-medium">Operação realizada com sucesso!</span>
     </div>
@@ -349,7 +361,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAfi8t2XLGINLSKaWqXdi_jRNGO2EJdXIc",
             authDomain: "eletrica-programacao-semanal.firebaseapp.com",
@@ -359,17 +370,14 @@
             appId: "1:242010113225:web:59510e86dd53fdd244b918"
         };
 
-        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const ordersRef = db.collection('orders');
 
-        // Habilita persistência offline do Firestore
         db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
             console.warn("Persistência do Firestore não ativada:", err.code);
         });
 
-        // Days Configuration
         const DAYS_CONFIG = [
             { id: 'segunda', title: 'Segunda-feira', short: 'SEG' },
             { id: 'terca', title: 'Terça-feira', short: 'TER' },
@@ -380,7 +388,6 @@
             { id: 'domingo', title: 'Domingo', short: 'DOM' }
         ];
 
-        // Status Configuration
         const STATUS_CONFIG = [
             { id: 'backlog', title: 'Backlog (Pendente)', color: 'border-slate-500' },
             { id: 'programado', title: 'Programado', color: 'border-sky-500' },
@@ -391,12 +398,70 @@
 
         let orders = [];
         let currentView = 'semanal'; 
-        let currentSelectedTecnicos = [];
+        let currentTecnicosExecucao = [];
         let currentTempChecklist = [];
-        let currentTempHistory = [];
         let isOnline = navigator.onLine;
 
-        // Atualiza os elementos visuais de Status da Conexão
+        // Configuração do Canvas de Assinatura
+        let canvas, ctx, isDrawing = false;
+
+        function initSignaturePad() {
+            canvas = document.getElementById('signature-pad');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = 112;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000';
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            canvas.addEventListener('touchstart', (e) => { startDrawing(e.touches[0]); e.preventDefault(); });
+            canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); });
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDrawing() { isDrawing = false; }
+
+        function clearSignature() {
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function getSignatureData() {
+            if (!canvas) return '';
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL() ? '' : canvas.toDataURL();
+        }
+
+        function loadSignatureData(dataUrl) {
+            clearSignature();
+            if (dataUrl) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = dataUrl;
+            }
+        }
+
         function updateConnectionUI(online, isLocalFallback = false) {
             isOnline = online;
             const badge = document.getElementById('status-cloud-badge');
@@ -411,7 +476,6 @@
                 dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
                 icon.className = "fa-solid fa-cloud text-[11px]";
                 text.textContent = "Nuvem Conectada";
-
                 modeBadge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-950 text-sky-300 border border-sky-700/80";
                 modeText.textContent = "Modo Nuvem (Firestore)";
             } else {
@@ -419,51 +483,24 @@
                 dot.className = "w-2 h-2 rounded-full bg-rose-500";
                 icon.className = "fa-solid fa-cloud-slash text-[11px]";
                 text.textContent = "Sem Conexão Nuvem";
-
                 modeBadge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-300 border border-amber-700/80";
                 modeText.textContent = "Modo Local (Offline)";
             }
         }
 
-        // Armazenamento / Fallback Local (LocalStorage)
-        function saveLocalOrders(data) {
-            localStorage.setItem('pcm_orders_backup', JSON.stringify(data));
-        }
+        function saveLocalOrders(data) { localStorage.setItem('pcm_orders_backup', JSON.stringify(data)); }
+        function loadLocalOrders() { const data = localStorage.getItem('pcm_orders_backup'); return data ? JSON.parse(data) : []; }
 
-        function loadLocalOrders() {
-            const data = localStorage.getItem('pcm_orders_backup');
-            return data ? JSON.parse(data) : [];
-        }
-
-        // Listeners de Conexão do Navegador
-        window.addEventListener('online', () => {
-            updateConnectionUI(true);
-            showToast("Conexão restabelecida! Sincronizando dados...");
-        });
-
-        window.addEventListener('offline', () => {
-            updateConnectionUI(false);
-            showToast("Conexão perdida. Operando em Modo Local.", true);
-        });
-
-        // Escuta atualizações no Firestore em tempo real
         function initFirebaseRealtimeListener() {
             ordersRef.onSnapshot((snapshot) => {
-                const cloudHasPendingWrites = snapshot.metadata.hasPendingWrites;
-                updateConnectionUI(navigator.onLine && !cloudHasPendingWrites);
-
-                orders = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                updateConnectionUI(navigator.onLine && !snapshot.metadata.hasPendingWrites);
+                orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 saveLocalOrders(orders);
                 renderBoard();
             }, (error) => {
-                console.error("Erro ao escutar Firestore: ", error);
                 updateConnectionUI(false, true);
                 orders = loadLocalOrders();
                 renderBoard();
-                showToast("Operando com cache local.", true);
             });
         }
 
@@ -471,9 +508,7 @@
             try {
                 const { id, ...dataToSave } = osData;
                 if (id) {
-                    if (isOnline) {
-                        await ordersRef.doc(id).set(dataToSave, { merge: true });
-                    }
+                    if (isOnline) await ordersRef.doc(id).set(dataToSave, { merge: true });
                     const idx = orders.findIndex(o => o.id === id);
                     if (idx !== -1) orders[idx] = { id, ...dataToSave };
                 } else {
@@ -481,57 +516,19 @@
                         const newDoc = await ordersRef.add(dataToSave);
                         orders.push({ id: newDoc.id, ...dataToSave });
                     } else {
-                        const localId = 'local_' + Date.now();
-                        orders.push({ id: localId, ...dataToSave });
+                        orders.push({ id: 'local_' + Date.now(), ...dataToSave });
                     }
                 }
                 saveLocalOrders(orders);
                 renderBoard();
             } catch (err) {
-                console.error("Erro ao salvar:", err);
-                showToast("Salvo localmente (offline).", true);
                 saveLocalOrders(orders);
                 renderBoard();
             }
         }
 
-        async function deleteOrderFromCloud(id) {
-            try {
-                if (isOnline && !id.startsWith('local_')) {
-                    await ordersRef.doc(id).delete();
-                }
-                orders = orders.filter(o => o.id !== id);
-                saveLocalOrders(orders);
-                renderBoard();
-            } catch (err) {
-                console.error("Erro ao deletar:", err);
-                orders = orders.filter(o => o.id !== id);
-                saveLocalOrders(orders);
-                renderBoard();
-                showToast("Removido localmente.", true);
-            }
-        }
-
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            const toastIcon = document.getElementById('toast-icon');
-
-            toastMsg.textContent = message;
-            if (isError) {
-                toastIcon.className = "fa-solid fa-circle-exclamation text-rose-400 text-lg";
-            } else {
-                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
-            }
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-
-        function getPriorityBadgeClass(prioridade) {
-            switch (prioridade) {
+        function getPriorityBadgeClass(p) {
+            switch (p) {
                 case 'Crítica': return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
                 case 'Alta': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
                 case 'Média': return 'bg-sky-500/20 text-sky-400 border-sky-500/30';
@@ -539,19 +536,9 @@
             }
         }
 
-        function getTypeBadgeClass(tipo) {
-            switch (tipo) {
-                case 'Preventiva': return 'text-sky-400';
-                case 'Corretiva': return 'text-rose-400';
-                case 'Preditiva': return 'text-purple-400';
-                case 'Melhoria': return 'text-emerald-400';
-                default: return 'text-amber-400';
-            }
-        }
-
         function getOSHomemHora(os) {
             const horasBase = parseFloat(os.horas) || 0;
-            const tecsCount = (os.tecnicos && os.tecnicos.length > 0) ? os.tecnicos.length : 1;
+            const tecsCount = (os.tecnicosExec && os.tecnicosExec.length > 0) ? os.tecnicosExec.length : 1;
             return horasBase * tecsCount;
         }
 
@@ -562,14 +549,14 @@
             const tipo = document.getElementById('filter-tipo').value;
 
             return orders.filter(os => {
-                const tecsString = (os.tecnicos || []).join(' ').toLowerCase();
+                const tecsString = (os.tecnicosExec || []).map(t => t.nome).join(' ').toLowerCase();
                 const matchSearch = !search || 
                     (os.numero && os.numero.toLowerCase().includes(search)) || 
                     (os.tag && os.tag.toLowerCase().includes(search)) || 
                     (os.titulo && os.titulo.toLowerCase().includes(search)) || 
                     tecsString.includes(search);
                 
-                const matchTecnico = !tecnico || (os.tecnicos && os.tecnicos.includes(tecnico));
+                const matchTecnico = !tecnico || (os.tecnicosExec && os.tecnicosExec.some(t => t.nome === tecnico));
                 const matchPrioridade = !prioridade || os.prioridade === prioridade;
                 const matchTipo = !tipo || os.tipo === tipo;
 
@@ -580,15 +567,13 @@
         function populateTechniciansFilter() {
             const select = document.getElementById('filter-tecnico');
             const currentValue = select.value;
-            
             let allTecs = [];
             orders.forEach(o => {
-                if (o.tecnicos && Array.isArray(o.tecnicos)) {
-                    allTecs.push(...o.tecnicos);
+                if (o.tecnicosExec && Array.isArray(o.tecnicosExec)) {
+                    allTecs.push(...o.tecnicosExec.map(t => t.nome));
                 }
             });
             const tecs = [...new Set(allTecs)].sort();
-            
             select.innerHTML = '<option value="">Todos os Técnicos</option>';
             tecs.forEach(t => {
                 const opt = document.createElement('option');
@@ -614,263 +599,176 @@
             document.getElementById('kpi-global-efic').textContent = aderencia + '%';
         }
 
-        function calculateDayMetrics(dayId, filteredList) {
-            const dayOrders = filteredList.filter(o => o.dia === dayId);
-            const totalProg = dayOrders.length;
-            const totalConc = dayOrders.filter(o => o.status === 'concluido').length;
-            const totalPend = dayOrders.filter(o => o.status !== 'concluido').length;
-            const hhPrev = dayOrders.reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
-            const hhExec = dayOrders.filter(o => o.status === 'concluido').reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
-            const efic = totalProg > 0 ? Math.round((totalConc / totalProg) * 100) : 0;
-
-            return { totalProg, totalConc, totalPend, hhPrev, hhExec, efic };
-        }
-
         function renderBoard() {
             populateTechniciansFilter();
             updateGlobalKPIs();
             const container = document.getElementById('board-container');
             container.innerHTML = '';
-
             const filteredOrders = getFilteredOrders();
 
             if (currentView === 'semanal') {
                 DAYS_CONFIG.forEach(day => {
-                    const metrics = calculateDayMetrics(day.id, filteredOrders);
                     const colOrders = filteredOrders.filter(o => o.dia === day.id);
-
-                    const colHtml = `
-                        <div class="w-80 flex-shrink-0 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
-                            <div class="p-3 border-b border-slate-700/80 bg-slate-800/90 rounded-t-xl sticky top-0 z-10">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h2 class="font-bold text-slate-200 text-sm flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-                                        ${day.title}
-                                    </h2>
-                                    <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-600">
-                                        ${colOrders.length} OS
-                                    </span>
-                                </div>
-
-                                <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-700/70 space-y-2">
-                                    <div class="grid grid-cols-3 gap-1 text-center">
-                                        <div class="bg-slate-800/70 p-1.5 rounded">
-                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Prog.</span>
-                                            <span class="text-xs font-bold text-sky-400">${metrics.totalProg}</span>
-                                        </div>
-                                        <div class="bg-slate-800/70 p-1.5 rounded">
-                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Conc.</span>
-                                            <span class="text-xs font-bold text-emerald-400">${metrics.totalConc}</span>
-                                        </div>
-                                        <div class="bg-slate-800/70 p-1.5 rounded">
-                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Pend.</span>
-                                            <span class="text-xs font-bold text-amber-400">${metrics.totalPend}</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
-                                        <span>Carga HH: <b class="text-purple-300">${metrics.hhExec.toFixed(1)} HH</b> / ${metrics.hhPrev.toFixed(1)} HH</span>
-                                        <span class="font-bold ${metrics.efic === 100 ? 'text-emerald-400' : 'text-sky-400'}">${metrics.efic}% Taxa</span>
-                                    </div>
-                                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                        <div class="bg-gradient-to-r from-sky-500 to-emerald-400 h-1.5 rounded-full transition-all duration-500" style="width: ${metrics.efic}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar kanban-dropzone" data-day="${day.id}">
-                                ${colOrders.map(os => renderCardHTML(os)).join('')}
-                                ${colOrders.length === 0 ? '<div class="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-700/50 rounded-lg">Arraste OS para este dia</div>' : ''}
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += colHtml;
-                });
-            } else {
-                // Status View
-                STATUS_CONFIG.forEach(status => {
-                    const colOrders = filteredOrders.filter(o => o.status === status.id);
-                    const totalHH = colOrders.reduce((a, b) => a + getOSHomemHora(b), 0);
-
-                    const colHtml = `
+                    container.innerHTML += `
                         <div class="w-80 flex-shrink-0 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
                             <div class="p-3 border-b border-slate-700/80 bg-slate-800/90 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
-                                <div>
-                                    <h2 class="font-bold text-slate-200 text-sm flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full ${status.id === 'backlog' ? 'bg-slate-400' : status.id === 'concluido' ? 'bg-emerald-400' : 'bg-sky-400'}"></span>
-                                        ${status.title}
-                                    </h2>
-                                    <span class="text-[10px] text-slate-400">Total: ${totalHH.toFixed(1)} HH</span>
-                                </div>
-                                <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-600">
-                                    ${colOrders.length}
-                                </span>
+                                <h2 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>${day.title}
+                                </h2>
+                                <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full">${colOrders.length} OS</span>
                             </div>
-
+                            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar kanban-dropzone" data-day="${day.id}">
+                                ${colOrders.map(os => renderCardHTML(os)).join('')}
+                            </div>
+                        </div>`;
+                });
+            } else {
+                STATUS_CONFIG.forEach(status => {
+                    const colOrders = filteredOrders.filter(o => o.status === status.id);
+                    container.innerHTML += `
+                        <div class="w-80 flex-shrink-0 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
+                            <div class="p-3 border-b border-slate-700/80 bg-slate-800/90 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
+                                <h2 class="font-bold text-slate-200 text-sm">${status.title}</h2>
+                                <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full">${colOrders.length}</span>
+                            </div>
                             <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar kanban-dropzone" data-status="${status.id}">
                                 ${colOrders.map(os => renderCardHTML(os)).join('')}
-                                ${colOrders.length === 0 ? '<div class="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-700/50 rounded-lg">Sem ordens neste status</div>' : ''}
                             </div>
-                        </div>
-                    `;
-                    container.innerHTML += colHtml;
+                        </div>`;
                 });
             }
-
             attachDragAndDrop();
         }
 
         function renderCardHTML(os) {
-            const completedChecks = (os.checklist || []).filter(c => c.done).length;
-            const totalChecks = (os.checklist || []).length;
-            const checkPct = totalChecks > 0 ? Math.round((completedChecks / totalChecks) * 100) : 0;
-            const diaNome = os.dia ? (DAYS_CONFIG.find(d => d.id === os.dia)?.short || 'N/A') : 'N/P';
-            const tecsList = (os.tecnicos && os.tecnicos.length > 0) ? os.tecnicos : ['Não Atribuído'];
-            const hhTotal = getOSHomemHora(os);
-
+            const tecsList = (os.tecnicosExec && os.tecnicosExec.length > 0) ? os.tecnicosExec.map(t => t.nome) : ['Não Atribuído'];
             return `
-                <div draggable="true" data-id="${os.id}" class="os-card bg-slate-900 border border-slate-700/90 hover:border-sky-500/80 rounded-xl p-3 shadow-md transition-all hover:shadow-lg cursor-grab active:cursor-grabbing group">
-                    <div class="flex items-start justify-between gap-1 mb-1.5">
-                        <span class="text-xs font-bold text-sky-400 font-mono tracking-tight">${os.numero}</span>
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClass(os.prioridade)}">${os.prioridade}</span>
-                            <button onclick="openModalForEdit('${os.id}')" class="text-slate-500 hover:text-slate-200 p-1 rounded transition opacity-0 group-hover:opacity-100">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
+                <div draggable="true" data-id="${os.id}" class="os-card bg-slate-900 border border-slate-700 hover:border-sky-500 rounded-xl p-3 shadow cursor-grab group">
+                    <div class="flex items-start justify-between gap-1 mb-1">
+                        <span class="text-xs font-bold text-sky-400 font-mono">${os.numero}</span>
+                        <div class="flex gap-1">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClass(os.prioridade)}">${os.prioridade}</span>
+                            <button onclick="openModalForEdit('${os.id}')" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="printOS('${os.id}')" class="text-slate-400 hover:text-indigo-400 p-1" title="Imprimir PDF"><i class="fa-solid fa-print"></i></button>
                         </div>
                     </div>
-
-                    <div class="text-[11px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1">
-                        <i class="fa-solid fa-cube text-[10px] text-slate-500"></i> ${os.tag}
+                    <h3 class="text-xs font-bold text-slate-100 line-clamp-2 mb-2">${os.titulo}</h3>
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        ${tecsList.map(t => `<span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded border border-slate-700">${t}</span>`).join('')}
                     </div>
-                    <h3 class="text-xs font-bold text-slate-100 line-clamp-2 mb-2 leading-snug">${os.titulo}</h3>
-
-                    <div class="flex flex-col gap-1 text-[11px] text-slate-400 mb-2 border-y border-slate-800 py-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="flex items-center gap-1"><i class="fa-solid fa-users text-slate-500"></i> ${tecsList.length} Técnico(s)</span>
-                            <span class="font-medium text-purple-300"><i class="fa-regular fa-clock text-slate-500 mr-0.5"></i>${hhTotal.toFixed(1)} HH (${os.horas}h/tec)</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1 mt-0.5">
-                            ${tecsList.map(t => `<span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded border border-slate-700/60">${t}</span>`).join('')}
-                        </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>${os.tipo}</span>
+                        ${os.assinatura ? '<span class="text-emerald-400"><i class="fa-solid fa-signature"></i> Assinado</span>' : ''}
                     </div>
-
-                    ${totalChecks > 0 ? `
-                    <div class="mb-2">
-                        <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
-                            <span>Checklist</span>
-                            <span class="font-semibold">${completedChecks}/${totalChecks} (${checkPct}%)</span>
-                        </div>
-                        <div class="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
-                            <div class="bg-sky-500 h-1 rounded-full" style="width: ${checkPct}%"></div>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <div class="flex items-center justify-between pt-1 text-[10px]">
-                        <span class="font-medium ${getTypeBadgeClass(os.tipo)}">${os.tipo}</span>
-                        <span class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 border border-slate-700/60 font-semibold">${diaNome}</span>
-                    </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function attachDragAndDrop() {
-            const cards = document.querySelectorAll('.os-card');
-            const dropzones = document.querySelectorAll('.kanban-dropzone');
-
-            cards.forEach(card => {
-                card.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', card.dataset.id);
-                    card.classList.add('dragging');
-                });
-
-                card.addEventListener('dragend', () => {
-                    card.classList.remove('dragging');
-                });
+            document.querySelectorAll('.os-card').forEach(card => {
+                card.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', card.dataset.id));
             });
-
-            dropzones.forEach(zone => {
-                zone.addEventListener('dragover', (e) => {
+            document.querySelectorAll('.kanban-dropzone').forEach(zone => {
+                zone.addEventListener('dragover', e => e.preventDefault());
+                zone.addEventListener('drop', async e => {
                     e.preventDefault();
-                    zone.classList.add('drag-over');
-                });
-
-                zone.addEventListener('dragleave', () => {
-                    zone.classList.remove('drag-over');
-                });
-
-                zone.addEventListener('drop', async (e) => {
-                    e.preventDefault();
-                    zone.classList.remove('drag-over');
                     const id = e.dataTransfer.getData('text/plain');
                     const os = orders.find(o => o.id === id);
-
                     if (!os) return;
-
-                    const targetDay = zone.dataset.day;
-                    const targetStatus = zone.dataset.status;
-
-                    if (targetDay) {
-                        os.dia = targetDay;
-                        if (os.status === 'backlog') {
-                            os.status = 'programado';
-                        }
-                    }
-
-                    if (targetStatus) {
-                        os.status = targetStatus;
-                        if (targetStatus === 'backlog') {
-                            os.dia = '';
-                        }
-                    }
-
+                    if (zone.dataset.day) os.dia = zone.dataset.day;
+                    if (zone.dataset.status) os.status = zone.dataset.status;
                     await saveOrderToCloud(os);
-                    showToast(`Ordem ${os.numero} atualizada!`);
                 });
             });
         }
 
-        function renderSelectedTecnicos() {
-            const container = document.getElementById('tecnicos-selected-container');
-            container.innerHTML = '';
+       // Função para calcular as horas de um técnico individual com base no início e fim (ou usar as horas estimadas da OS)
+function calcularHorasTecnico(tecnico, horasOSPadrao) {
+    if (tecnico.inicio && tecnico.fim) {
+        const inicio = new Date(tecnico.inicio);
+        const fim = new Date(tecnico.fim);
+        const diffMs = fim - inicio;
+        if (diffMs > 0) {
+            return diffMs / (1000 * 60 * 60); // Converte milissegundos para horas
+        }
+    }
+    return parseFloat(horasOSPadrao) || 0;
+}
 
-            if (currentSelectedTecnicos.length === 0) {
-                container.innerHTML = '<span class="text-xs text-slate-500 italic">Nenhum técnico alocado. Adicione abaixo.</span>';
-            } else {
-                currentSelectedTecnicos.forEach((tec, idx) => {
-                    const chip = document.createElement('span');
-                    chip.className = 'bg-sky-950/80 text-sky-300 border border-sky-700/80 text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium';
-                    chip.innerHTML = `
-                        <i class="fa-solid fa-user-gear text-[10px]"></i> ${tec}
-                        <button type="button" onclick="removeTecnicoChip(${idx})" class="hover:text-rose-400 ml-1 text-xs">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    `;
-                    container.appendChild(chip);
+// Recalcula o HH Total exibido no topo da seção de técnicos no Modal
+function atualizarHHModal() {
+    const horasEstimadasOS = parseFloat(document.getElementById('os-horas').value) || 0;
+    let hhTotal = 0;
+
+    if (currentTecnicosExecucao.length === 0) {
+        hhTotal = horasEstimadasOS; // Se não houver técnicos alocados, considera 1 técnico com as horas estimadas
+    } else {
+        currentTecnicosExecucao.forEach(t => {
+            hhTotal += calcularHorasTecnico(t, horasEstimadasOS);
+        });
+    }
+
+    document.getElementById('hh-preview-modal').textContent = `${hhTotal.toFixed(1)} HH Totais`;
+}
+
+// Renderização dos Técnicos com Datas, Horários e HH Individual
+function renderTecnicosExecucao() {
+    const container = document.getElementById('tecnicos-execucao-container');
+    container.innerHTML = '';
+    const horasEstimadasOS = parseFloat(document.getElementById('os-horas').value) || 0;
+
+    if (currentTecnicosExecucao.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-500 italic block text-center py-2">Nenhum técnico ou horário alocado.</span>';
+    } else {
+        currentTecnicosExecucao.forEach((t, index) => {
+            const inicioFormat = t.inicio ? new Date(t.inicio).toLocaleString('pt-BR') : 'Não definido';
+            const fimFormat = t.fim ? new Date(t.fim).toLocaleString('pt-BR') : 'Não definido';
+            const hhTecnico = calcularHorasTecnico(t, horasEstimadasOS);
+
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between bg-slate-800 p-2.5 rounded-lg border border-slate-700 text-xs';
+            div.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mr-3">
+                        <span class="font-bold text-sky-400">${t.nome}</span>
+                        <span class="text-[11px] font-mono font-semibold text-purple-300 bg-purple-950/50 px-2 py-0.5 rounded border border-purple-800/50">${hhTecnico.toFixed(1)} HH</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 block mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${inicioFormat} até ${fimFormat}</span>
+                </div>
+                <button type="button" onclick="removeTecnicoExec(${index})" class="text-rose-400 hover:text-rose-300 p-1">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    atualizarHHModal();
+}
+
+// Evento para recalcular o HH sempre que o campo de horas da OS for alterado
+document.getElementById('os-horas').addEventListener('input', atualizarHHModal);
+
+        document.getElementById('btn-add-tecnico-exec').addEventListener('click', () => {
+            const nomeInput = document.getElementById('input-tec-nome');
+            const inicioInput = document.getElementById('input-tec-inicio');
+            const fimInput = document.getElementById('input-tec-fim');
+
+            if (nomeInput.value.trim()) {
+                currentTecnicosExecucao.push({
+                    nome: nomeInput.value.trim(),
+                    inicio: inicioInput.value,
+                    fim: fimInput.value
                 });
+                nomeInput.value = '';
+                inicioInput.value = '';
+                fimInput.value = '';
+                renderTecnicosExecucao();
             }
+        });
 
-            updateModalHHPreview();
-        }
-
-        function addTecnicoChip(nome) {
-            const cleanName = nome.trim();
-            if (cleanName && !currentSelectedTecnicos.includes(cleanName)) {
-                currentSelectedTecnicos.push(cleanName);
-                renderSelectedTecnicos();
-            }
-        }
-
-        function removeTecnicoChip(index) {
-            currentSelectedTecnicos.splice(index, 1);
-            renderSelectedTecnicos();
-        }
-
-        function updateModalHHPreview() {
-            const horas = parseFloat(document.getElementById('os-horas').value) || 0;
-            const count = currentSelectedTecnicos.length || 1;
-            const hhTotal = horas * count;
-            document.getElementById('hh-preview-modal').textContent = `${hhTotal.toFixed(1)} HH Totais (${horas}h x ${count} tec)`;
+        function removeTecnicoExec(index) {
+            currentTecnicosExecucao.splice(index, 1);
+            renderTecnicosExecucao();
         }
 
         function openModalForCreate() {
@@ -878,20 +776,15 @@
             document.getElementById('form-os').reset();
             document.getElementById('os-id').value = '';
             document.getElementById('btn-delete-os').classList.add('hidden');
-            
+            document.getElementById('btn-print-os').classList.add('hidden');
             document.getElementById('os-numero').value = `OS-2026-${String(orders.length + 1).padStart(2, '0')}`;
-            document.getElementById('os-dia').value = '';
-            document.getElementById('os-status').value = 'backlog';
-            
-            currentSelectedTecnicos = [];
+            currentTecnicosExecucao = [];
             currentTempChecklist = [];
-            currentTempHistory = [];
-
-            renderSelectedTecnicos();
+            renderTecnicosExecucao();
             renderModalChecklist();
-            renderModalHistory();
-
+            clearSignature();
             document.getElementById('modal-os').classList.remove('hidden');
+            setTimeout(initSignaturePad, 100);
         }
 
         function openModalForEdit(id) {
@@ -901,293 +794,178 @@
             document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-file-pen text-sky-400"></i> Editar Ordem de Serviço';
             document.getElementById('os-id').value = os.id;
             document.getElementById('os-numero').value = os.numero;
-            document.getElementById('os-tag').value = os.tag;
+            document.getElementById('os-tag').value = os.tag || '';
             document.getElementById('os-titulo').value = os.titulo;
             document.getElementById('os-descricao').value = os.descricao || '';
             document.getElementById('os-prioridade').value = os.prioridade;
             document.getElementById('os-tipo').value = os.tipo;
             document.getElementById('os-horas').value = os.horas;
-            document.getElementById('os-dia').value = os.status === 'backlog' ? '' : (os.dia || '');
+            document.getElementById('os-dia').value = os.dia || '';
             document.getElementById('os-status').value = os.status;
 
             document.getElementById('btn-delete-os').classList.remove('hidden');
+            document.getElementById('btn-print-os').classList.remove('hidden');
 
-            currentSelectedTecnicos = [...(os.tecnicos || [])];
-            currentTempChecklist = [...(os.checklist || [])];
-            currentTempHistory = [...(os.historico || [])];
+            currentTecnicosExecucao = os.tecnicosExec || [];
+            currentTempChecklist = os.checklist || [];
 
-            renderSelectedTecnicos();
+            renderTecnicosExecucao();
             renderModalChecklist();
-            renderModalHistory();
-
             document.getElementById('modal-os').classList.remove('hidden');
+            setTimeout(() => {
+                initSignaturePad();
+                loadSignatureData(os.assinatura || '');
+            }, 100);
         }
 
-        function closeModal() {
-            document.getElementById('modal-os').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('modal-os').classList.add('hidden'); }
 
         function renderModalChecklist() {
             const list = document.getElementById('modal-checklist-items');
-            const countLabel = document.getElementById('checklist-modal-count');
             list.innerHTML = '';
-
-            const doneCount = currentTempChecklist.filter(c => c.done).length;
-            countLabel.textContent = `${doneCount}/${currentTempChecklist.length}`;
-
             currentTempChecklist.forEach((item, index) => {
                 const li = document.createElement('li');
                 li.className = 'flex items-center justify-between bg-slate-900/80 px-2.5 py-1.5 rounded border border-slate-700/60 text-xs';
                 li.innerHTML = `
                     <label class="flex items-center gap-2 cursor-pointer flex-1">
-                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleCheckItem(${index})" class="rounded border-slate-700 bg-slate-800 text-sky-500 focus:ring-0">
+                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleCheckItem(${index})" class="rounded border-slate-700 bg-slate-800 text-sky-500">
                         <span class="${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.title}</span>
                     </label>
-                    <button type="button" onclick="removeCheckItem(${index})" class="text-slate-500 hover:text-rose-400 p-1">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                `;
+                    <button type="button" onclick="removeCheckItem(${index})" class="text-slate-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash-can"></i></button>`;
                 list.appendChild(li);
             });
         }
 
-        function toggleCheckItem(index) {
-            currentTempChecklist[index].done = !currentTempChecklist[index].done;
-            renderModalChecklist();
-        }
-
-        function removeCheckItem(index) {
-            currentTempChecklist.splice(index, 1);
-            renderModalChecklist();
-        }
-
-        function renderModalHistory() {
-            const list = document.getElementById('modal-history-list');
-            list.innerHTML = '';
-
-            if (currentTempHistory.length === 0) {
-                list.innerHTML = '<span class="text-slate-500 italic block text-center py-1">Nenhum apontamento feito ainda.</span>';
-                return;
-            }
-
-            currentTempHistory.forEach(h => {
-                const item = document.createElement('div');
-                item.className = 'border-b border-slate-800 last:border-none pb-1 mb-1';
-                item.innerHTML = `
-                    <div class="flex justify-between text-[10px] text-slate-400">
-                        <span class="font-bold text-sky-400">${h.autor}</span>
-                        <span>${h.data}</span>
-                    </div>
-                    <p class="text-slate-200 mt-0.5">${h.texto}</p>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        // Sincronização automática de Status vs Dia da Programação no Formulário
-        document.getElementById('os-status').addEventListener('change', (e) => {
-            const diaSelect = document.getElementById('os-dia');
-            if (e.target.value === 'backlog') {
-                diaSelect.value = '';
-            } else if (!diaSelect.value) {
-                diaSelect.value = 'segunda';
-            }
-        });
-
-        document.getElementById('os-dia').addEventListener('change', (e) => {
-            const statusSelect = document.getElementById('os-status');
-            if (!e.target.value) {
-                statusSelect.value = 'backlog';
-            } else if (statusSelect.value === 'backlog') {
-                statusSelect.value = 'programado';
-            }
-        });
-
-        document.getElementById('btn-add-tecnico').addEventListener('click', () => {
-            const input = document.getElementById('input-add-tecnico');
-            if (input.value.trim()) {
-                addTecnicoChip(input.value);
-                input.value = '';
-            }
-        });
-
-        document.getElementById('input-add-tecnico').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.target.value.trim()) {
-                    addTecnicoChip(e.target.value);
-                    e.target.value = '';
-                }
-            }
-        });
-
-        document.getElementById('os-horas').addEventListener('input', updateModalHHPreview);
-
-        document.getElementById('form-os').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            if (currentSelectedTecnicos.length === 0) {
-                showToast('Selecione ao menos 1 técnico para a Ordem de Serviço!', true);
-                return;
-            }
-
-            const id = document.getElementById('os-id').value;
-            const statusValue = document.getElementById('os-status').value;
-            let diaValue = document.getElementById('os-dia').value;
-
-            if (statusValue === 'backlog') {
-                diaValue = '';
-            }
-
-            const osData = {
-                id: id || null,
-                numero: document.getElementById('os-numero').value,
-                tag: document.getElementById('os-tag').value,
-                tecnicos: [...currentSelectedTecnicos],
-                titulo: document.getElementById('os-titulo').value,
-                descricao: document.getElementById('os-descricao').value,
-                prioridade: document.getElementById('os-prioridade').value,
-                tipo: document.getElementById('os-tipo').value,
-                horas: parseFloat(document.getElementById('os-horas').value) || 1,
-                dia: diaValue,
-                status: statusValue,
-                checklist: currentTempChecklist,
-                historico: currentTempHistory
-            };
-
-            await saveOrderToCloud(osData);
-            closeModal();
-            showToast(id ? 'Ordem de serviço atualizada!' : 'Nova OS salva com sucesso!');
-        });
-
-        document.getElementById('btn-delete-os').addEventListener('click', async () => {
-            const id = document.getElementById('os-id').value;
-            if (id && confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
-                await deleteOrderFromCloud(id);
-                closeModal();
-                showToast('Ordem de serviço excluída.', true);
-            }
-        });
+        function toggleCheckItem(i) { currentTempChecklist[i].done = !currentTempChecklist[i].done; renderModalChecklist(); }
+        function removeCheckItem(i) { currentTempChecklist.splice(i, 1); renderModalChecklist(); }
 
         document.getElementById('btn-add-check-item').addEventListener('click', () => {
             const input = document.getElementById('input-new-check-item');
             if (input.value.trim()) {
-                currentTempChecklist.push({
-                    id: Date.now().toString(),
-                    title: input.value.trim(),
-                    done: false
-                });
+                currentTempChecklist.push({ id: Date.now().toString(), title: input.value.trim(), done: false });
                 input.value = '';
                 renderModalChecklist();
             }
         });
 
-        document.getElementById('btn-add-history').addEventListener('click', () => {
-            const input = document.getElementById('input-new-history');
-            const autorText = currentSelectedTecnicos.length > 0 ? currentSelectedTecnicos.join(', ') : 'PCM';
-            if (input.value.trim()) {
-                const now = new Date();
-                const dataStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                currentTempHistory.unshift({
-                    data: dataStr,
-                    autor: autorText,
-                    texto: input.value.trim()
-                });
-                input.value = '';
-                renderModalHistory();
-            }
-        });
+        document.getElementById('btn-clear-signature').addEventListener('click', clearSignature);
 
-        document.getElementById('tab-semanal').addEventListener('click', () => {
-            currentView = 'semanal';
-            document.getElementById('tab-semanal').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow';
-            document.getElementById('tab-status').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white';
-            renderBoard();
-        });
-
-        document.getElementById('tab-status').addEventListener('click', () => {
-            currentView = 'status';
-            document.getElementById('tab-status').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow';
-            document.getElementById('tab-semanal').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white';
-            renderBoard();
-        });
-
-        ['filter-search', 'filter-tecnico', 'filter-prioridade', 'filter-tipo'].forEach(id => {
-            document.getElementById(id).addEventListener('change', renderBoard);
-            document.getElementById(id).addEventListener('keyup', renderBoard);
-        });
-
-        document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
-            document.getElementById('filter-search').value = '';
-            document.getElementById('filter-tecnico').value = '';
-            document.getElementById('filter-prioridade').value = '';
-            document.getElementById('filter-tipo').value = '';
-            renderBoard();
-        });
-
-        document.getElementById('btn-export-json').addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(orders, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `pcm_backup_${new Date().toISOString().slice(0, 10)}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast('Backup do banco de dados exportado!');
-        });
-
-        document.getElementById('input-import-json').addEventListener('change', (e) => {
-            const fileReader = new FileReader();
-            fileReader.onload = async (event) => {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    if (Array.isArray(imported)) {
-                        for (const item of imported) {
-                            await saveOrderToCloud(item);
-                        }
-                        showToast('Dados importados com sucesso!');
-                    } else {
-                        showToast('Formato JSON inválido.', true);
-                    }
-                } catch (err) {
-                    showToast('Erro ao ler o arquivo JSON.', true);
-                }
+        document.getElementById('form-os').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('os-id').value;
+            const osData = {
+                id: id || null,
+                numero: document.getElementById('os-numero').value,
+                tag: document.getElementById('os-tag').value.trim(),
+                tecnicosExec: [...currentTecnicosExecucao],
+                titulo: document.getElementById('os-titulo').value,
+                descricao: document.getElementById('os-descricao').value,
+                prioridade: document.getElementById('os-prioridade').value,
+                tipo: document.getElementById('os-tipo').value,
+                horas: parseFloat(document.getElementById('os-horas').value) || 1,
+                dia: document.getElementById('os-dia').value,
+                status: document.getElementById('os-status').value,
+                checklist: currentTempChecklist,
+                assinatura: getSignatureData()
             };
-            if (e.target.files[0]) fileReader.readAsText(e.target.files[0]);
+
+            await saveOrderToCloud(osData);
+            closeModal();
         });
 
-        document.getElementById('btn-export-csv').addEventListener('click', () => {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "OS,Tag,Titulo,Tecnicos,HH_Total,Prioridade,Tipo,Horas_Tecnico,Dia,Status\n";
+        // Função para Gerar e Imprimir o Relatório PDF da OS
+        function printOS(id) {
+            const os = orders.find(o => o.id === (id || document.getElementById('os-id').value));
+            if (!os) return;
 
-            orders.forEach(o => {
-                const tecs = (o.tecnicos || []).join(" | ");
-                const hhTotal = getOSHomemHora(o);
-                const row = [
-                    `"${o.numero}"`,
-                    `"${o.tag}"`,
-                    `"${o.titulo}"`,
-                    `"${tecs}"`,
-                    hhTotal,
-                    `"${o.prioridade}"`,
-                    `"${o.tipo}"`,
-                    o.horas,
-                    `"${o.dia}"`,
-                    `"${o.status}"`
-                ].join(",");
-                csvContent += row + "\n";
-            });
+            const printArea = document.getElementById('printable-os');
+            const tecsHtml = (os.tecnicosExec && os.tecnicosExec.length > 0) 
+                ? os.tecnicosExec.map(t => `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${t.nome}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${t.inicio ? new Date(t.inicio).toLocaleString('pt-BR') : 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${t.fim ? new Date(t.fim).toLocaleString('pt-BR') : 'N/A'}</td>
+                    </tr>
+                `).join('') 
+                : '<tr><td colspan="3" style="border: 1px solid #ddd; padding: 8px;">Nenhum técnico/horário registrado</td></tr>';
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `relatorio_manutencao_${new Date().toISOString().slice(0, 10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            showToast('Relatório CSV gerado!');
-        });
+            const checkHtml = (os.checklist && os.checklist.length > 0)
+                ? os.checklist.map(c => `<li>[${c.done ? 'X' : ' '}] ${c.title}</li>`).join('')
+                : '<li>Nenhuma sub-tarefa cadastrada</li>';
 
+            printArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #333;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 20px;">
+                        <div>
+                            <h1 style="margin: 0; color: #0284c7; font-size: 24px;">ORDEM DE SERVIÇO</h1>
+                            <p style="margin: 2px 0 0 0; color: #666;">PCM Master - Relatório de Manutenção</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; font-size: 20px;">${os.numero}</h2>
+                            <p style="margin: 2px 0 0 0; font-size: 12px; color: #666;">Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd; width: 50%;"><strong>Título:</strong> ${os.titulo}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Equipamento / Tag:</strong> ${os.tag || 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Tipo:</strong> ${os.tipo}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Prioridade:</strong> ${os.prioridade}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Status:</strong> ${os.status.toUpperCase()}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Duração Est.:</strong> ${os.horas} Horas</td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #0284c7;">Descrição da Atividade</h3>
+                        <p style="background: #f9f9f9; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${os.descricao || 'Sem descrição cadastrada.'}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #0284c7;">Técnicos e Execução</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f0f0f0;">
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Técnico</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Início da Execução</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Fim da Execução</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tecsHtml}</tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #0284c7;">Checklist de Verificação</h3>
+                        <ul style="list-style-type: none; padding-left: 5px;">${checkHtml}</ul>
+                    </div>
+
+                    <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div style="text-align: center; width: 45%;">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                                ${os.assinatura ? `<img src="${os.assinatura}" style="max-height: 60px;" />` : ''}
+                            </div>
+                            <p style="margin: 0; font-size: 12px;">Assinatura do Responsável / Técnico</p>
+                        </div>
+                        <div style="text-align: center; width: 45%;">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 60px;"></div>
+                            <p style="margin: 0; font-size: 12px;">Visto do Supervisor / Validação</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        }
+
+        document.getElementById('btn-print-os').addEventListener('click', () => printOS());
         document.getElementById('btn-nova-os').addEventListener('click', openModalForCreate);
         document.getElementById('btn-close-modal').addEventListener('click', closeModal);
         document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
