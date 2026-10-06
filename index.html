@@ -326,7 +326,26 @@
         <span id="toast-message" class="text-xs font-medium">Operação realizada com sucesso!</span>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <script>
+        // Configuração do Firebase (Substitua pelos dados do seu Console Firebase)
+        const firebaseConfig = {
+  apiKey: "AIzaSyAfi8t2XLGINLSKaWqXdi_jRNGO2EJdXIc",
+  authDomain: "eletrica-programacao-semanal.firebaseapp.com",
+  projectId: "eletrica-programacao-semanal",
+  storageBucket: "eletrica-programacao-semanal.firebasestorage.app",
+  messagingSenderId: "242010113225",
+  appId: "1:242010113225:web:59510e86dd53fdd244b918"
+};
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const ordersRef = db.collection('orders');
+
         // Days Configuration
         const DAYS_CONFIG = [
             { id: 'segunda', title: 'Segunda-feira', short: 'SEG' },
@@ -347,17 +366,47 @@
             { id: 'concluido', title: 'Concluído', color: 'border-emerald-500' }
         ];
 
-        const INITIAL_ORDERS = [];
-
-        let orders = JSON.parse(localStorage.getItem('pcm_orders_db_v3')) || INITIAL_ORDERS;
+        let orders = [];
         let currentView = 'semanal'; 
         let currentSelectedTecnicos = [];
         let currentTempChecklist = [];
         let currentTempHistory = [];
 
-        function saveOrdersToStorage() {
-            localStorage.setItem('pcm_orders_db_v3', JSON.stringify(orders));
-            renderBoard();
+        // Escuta atualizações no Firestore em tempo real
+        function initFirebaseRealtimeListener() {
+            ordersRef.onSnapshot((snapshot) => {
+                orders = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderBoard();
+            }, (error) => {
+                console.error("Erro ao escutar Firestore: ", error);
+                showToast("Erro na sincronização em nuvem.", true);
+            });
+        }
+
+        async function saveOrderToCloud(osData) {
+            try {
+                const { id, ...dataToSave } = osData;
+                if (id) {
+                    await ordersRef.doc(id).set(dataToSave, { merge: true });
+                } else {
+                    await ordersRef.add(dataToSave);
+                }
+            } catch (err) {
+                console.error("Erro ao salvar no Firebase:", err);
+                showToast("Erro ao salvar a OS na nuvem.", true);
+            }
+        }
+
+        async function deleteOrderFromCloud(id) {
+            try {
+                await ordersRef.doc(id).delete();
+            } catch (err) {
+                console.error("Erro ao deletar no Firebase:", err);
+                showToast("Erro ao excluir a OS da nuvem.", true);
+            }
         }
 
         function showToast(message, isError = false) {
@@ -412,9 +461,9 @@
             return orders.filter(os => {
                 const tecsString = (os.tecnicos || []).join(' ').toLowerCase();
                 const matchSearch = !search || 
-                    os.numero.toLowerCase().includes(search) || 
-                    os.tag.toLowerCase().includes(search) || 
-                    os.titulo.toLowerCase().includes(search) || 
+                    (os.numero && os.numero.toLowerCase().includes(search)) || 
+                    (os.tag && os.tag.toLowerCase().includes(search)) || 
+                    (os.titulo && os.titulo.toLowerCase().includes(search)) || 
                     tecsString.includes(search);
                 
                 const matchTecnico = !tecnico || (os.tecnicos && os.tecnicos.includes(tecnico));
@@ -647,7 +696,7 @@
                     zone.classList.remove('drag-over');
                 });
 
-                zone.addEventListener('drop', (e) => {
+                zone.addEventListener('drop', async (e) => {
                     e.preventDefault();
                     zone.classList.remove('drag-over');
                     const id = e.dataTransfer.getData('text/plain');
@@ -667,13 +716,12 @@
 
                     if (targetStatus) {
                         os.status = targetStatus;
-                        // Se for movido para a coluna de Backlog, remover a programação do dia
                         if (targetStatus === 'backlog') {
                             os.dia = '';
                         }
                     }
 
-                    saveOrdersToStorage();
+                    await saveOrderToCloud(os);
                     showToast(`Ordem ${os.numero} atualizada com sucesso!`);
                 });
             });
@@ -872,7 +920,7 @@
 
         document.getElementById('os-horas').addEventListener('input', updateModalHHPreview);
 
-        document.getElementById('form-os').addEventListener('submit', (e) => {
+        document.getElementById('form-os').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             if (currentSelectedTecnicos.length === 0) {
@@ -884,13 +932,12 @@
             const statusValue = document.getElementById('os-status').value;
             let diaValue = document.getElementById('os-dia').value;
 
-            // Garantia de regra: Se estiver em Backlog, não pode ter dia de programação
             if (statusValue === 'backlog') {
                 diaValue = '';
             }
 
             const osData = {
-                id: id || Date.now().toString(),
+                id: id || null,
                 numero: document.getElementById('os-numero').value,
                 tag: document.getElementById('os-tag').value,
                 tecnicos: [...currentSelectedTecnicos],
@@ -905,25 +952,17 @@
                 historico: currentTempHistory
             };
 
-            if (id) {
-                const idx = orders.findIndex(o => o.id === id);
-                if (idx !== -1) orders[idx] = osData;
-            } else {
-                orders.push(osData);
-            }
-
-            saveOrdersToStorage();
+            await saveOrderToCloud(osData);
             closeModal();
-            showToast(id ? 'Ordem de serviço atualizada!' : 'Nova OS cadastrada com sucesso!');
+            showToast(id ? 'Ordem de serviço atualizada na nuvem!' : 'Nova OS salva na nuvem com sucesso!');
         });
 
-        document.getElementById('btn-delete-os').addEventListener('click', () => {
+        document.getElementById('btn-delete-os').addEventListener('click', async () => {
             const id = document.getElementById('os-id').value;
             if (id && confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
-                orders = orders.filter(o => o.id !== id);
-                saveOrdersToStorage();
+                await deleteOrderFromCloud(id);
                 closeModal();
-                showToast('Ordem de serviço excluída.', true);
+                showToast('Ordem de serviço excluída da nuvem.', true);
             }
         });
 
@@ -996,13 +1035,14 @@
 
         document.getElementById('input-import-json').addEventListener('change', (e) => {
             const fileReader = new FileReader();
-            fileReader.onload = (event) => {
+            fileReader.onload = async (event) => {
                 try {
                     const imported = JSON.parse(event.target.result);
                     if (Array.isArray(imported)) {
-                        orders = imported;
-                        saveOrdersToStorage();
-                        showToast('Dados importados com sucesso!');
+                        for (const item of imported) {
+                            await saveOrderToCloud(item);
+                        }
+                        showToast('Dados importados com sucesso para a nuvem!');
                     } else {
                         showToast('Formato JSON inválido.', true);
                     }
@@ -1050,7 +1090,7 @@
         document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
 
         window.onload = function() {
-            renderBoard();
+            initFirebaseRealtimeListener();
         };
     </script>
 </body>
