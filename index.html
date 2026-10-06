@@ -44,16 +44,34 @@
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <!-- Brand Title -->
+                <!-- Brand Title & Connection Status Badges -->
                 <div class="flex items-center space-x-3">
                     <div class="bg-gradient-to-tr from-sky-500 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-sky-500/20">
                         <i class="fa-solid fa-wrench text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                            PCM Master <span class="text-xs bg-sky-500/20 text-sky-400 font-semibold px-2 py-0.5 rounded-full border border-sky-500/30">Programação Semanal</span>
-                        </h1>
-                        <p class="text-xs text-slate-400">Gestão e Painel Integrado de Ordens de Serviço</p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                                PCM Master <span class="text-xs bg-sky-500/20 text-sky-400 font-semibold px-2 py-0.5 rounded-full border border-sky-500/30">Programação Semanal</span>
+                            </h1>
+                            
+                            <!-- Indicators for Connection and Mode -->
+                            <div class="flex items-center gap-1.5 ml-1">
+                                <!-- Connection Status -->
+                                <span id="status-cloud-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="status-cloud-dot"></span>
+                                    <i class="fa-solid fa-cloud text-[11px]" id="status-cloud-icon"></i>
+                                    <span id="status-cloud-text">Nuvem Conectada</span>
+                                </span>
+
+                                <!-- Operation Mode -->
+                                <span id="status-mode-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-700 text-slate-300 border border-slate-600">
+                                    <i class="fa-solid fa-server text-[9px]"></i>
+                                    <span id="status-mode-text">Modo Nuvem</span>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Gestão e Painel Integrado de Ordens de Serviço</p>
                     </div>
                 </div>
 
@@ -331,20 +349,25 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // Configuração do Firebase (Substitua pelos dados do seu Console Firebase)
+        // Configuração do Firebase
         const firebaseConfig = {
-  apiKey: "AIzaSyAfi8t2XLGINLSKaWqXdi_jRNGO2EJdXIc",
-  authDomain: "eletrica-programacao-semanal.firebaseapp.com",
-  projectId: "eletrica-programacao-semanal",
-  storageBucket: "eletrica-programacao-semanal.firebasestorage.app",
-  messagingSenderId: "242010113225",
-  appId: "1:242010113225:web:59510e86dd53fdd244b918"
-};
+            apiKey: "AIzaSyAfi8t2XLGINLSKaWqXdi_jRNGO2EJdXIc",
+            authDomain: "eletrica-programacao-semanal.firebaseapp.com",
+            projectId: "eletrica-programacao-semanal",
+            storageBucket: "eletrica-programacao-semanal.firebasestorage.app",
+            messagingSenderId: "242010113225",
+            appId: "1:242010113225:web:59510e86dd53fdd244b918"
+        };
 
         // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const ordersRef = db.collection('orders');
+
+        // Habilita persistência offline do Firestore
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+            console.warn("Persistência do Firestore não ativada:", err.code);
+        });
 
         // Days Configuration
         const DAYS_CONFIG = [
@@ -371,18 +394,76 @@
         let currentSelectedTecnicos = [];
         let currentTempChecklist = [];
         let currentTempHistory = [];
+        let isOnline = navigator.onLine;
+
+        // Atualiza os elementos visuais de Status da Conexão
+        function updateConnectionUI(online, isLocalFallback = false) {
+            isOnline = online;
+            const badge = document.getElementById('status-cloud-badge');
+            const dot = document.getElementById('status-cloud-dot');
+            const icon = document.getElementById('status-cloud-icon');
+            const text = document.getElementById('status-cloud-text');
+            const modeText = document.getElementById('status-mode-text');
+            const modeBadge = document.getElementById('status-mode-badge');
+
+            if (online && !isLocalFallback) {
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                icon.className = "fa-solid fa-cloud text-[11px]";
+                text.textContent = "Nuvem Conectada";
+
+                modeBadge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-950 text-sky-300 border border-sky-700/80";
+                modeText.textContent = "Modo Nuvem (Firestore)";
+            } else {
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                dot.className = "w-2 h-2 rounded-full bg-rose-500";
+                icon.className = "fa-solid fa-cloud-slash text-[11px]";
+                text.textContent = "Sem Conexão Nuvem";
+
+                modeBadge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-300 border border-amber-700/80";
+                modeText.textContent = "Modo Local (Offline)";
+            }
+        }
+
+        // Armazenamento / Fallback Local (LocalStorage)
+        function saveLocalOrders(data) {
+            localStorage.setItem('pcm_orders_backup', JSON.stringify(data));
+        }
+
+        function loadLocalOrders() {
+            const data = localStorage.getItem('pcm_orders_backup');
+            return data ? JSON.parse(data) : [];
+        }
+
+        // Listeners de Conexão do Navegador
+        window.addEventListener('online', () => {
+            updateConnectionUI(true);
+            showToast("Conexão restabelecida! Sincronizando dados...");
+        });
+
+        window.addEventListener('offline', () => {
+            updateConnectionUI(false);
+            showToast("Conexão perdida. Operando em Modo Local.", true);
+        });
 
         // Escuta atualizações no Firestore em tempo real
         function initFirebaseRealtimeListener() {
             ordersRef.onSnapshot((snapshot) => {
+                const cloudHasPendingWrites = snapshot.metadata.hasPendingWrites;
+                updateConnectionUI(navigator.onLine && !cloudHasPendingWrites);
+
                 orders = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                saveLocalOrders(orders);
                 renderBoard();
             }, (error) => {
                 console.error("Erro ao escutar Firestore: ", error);
-                showToast("Erro na sincronização em nuvem.", true);
+                updateConnectionUI(false, true);
+                orders = loadLocalOrders();
+                renderBoard();
+                showToast("Operando com cache local.", true);
             });
         }
 
@@ -390,22 +471,44 @@
             try {
                 const { id, ...dataToSave } = osData;
                 if (id) {
-                    await ordersRef.doc(id).set(dataToSave, { merge: true });
+                    if (isOnline) {
+                        await ordersRef.doc(id).set(dataToSave, { merge: true });
+                    }
+                    const idx = orders.findIndex(o => o.id === id);
+                    if (idx !== -1) orders[idx] = { id, ...dataToSave };
                 } else {
-                    await ordersRef.add(dataToSave);
+                    if (isOnline) {
+                        const newDoc = await ordersRef.add(dataToSave);
+                        orders.push({ id: newDoc.id, ...dataToSave });
+                    } else {
+                        const localId = 'local_' + Date.now();
+                        orders.push({ id: localId, ...dataToSave });
+                    }
                 }
+                saveLocalOrders(orders);
+                renderBoard();
             } catch (err) {
-                console.error("Erro ao salvar no Firebase:", err);
-                showToast("Erro ao salvar a OS na nuvem.", true);
+                console.error("Erro ao salvar:", err);
+                showToast("Salvo localmente (offline).", true);
+                saveLocalOrders(orders);
+                renderBoard();
             }
         }
 
         async function deleteOrderFromCloud(id) {
             try {
-                await ordersRef.doc(id).delete();
+                if (isOnline && !id.startsWith('local_')) {
+                    await ordersRef.doc(id).delete();
+                }
+                orders = orders.filter(o => o.id !== id);
+                saveLocalOrders(orders);
+                renderBoard();
             } catch (err) {
-                console.error("Erro ao deletar no Firebase:", err);
-                showToast("Erro ao excluir a OS da nuvem.", true);
+                console.error("Erro ao deletar:", err);
+                orders = orders.filter(o => o.id !== id);
+                saveLocalOrders(orders);
+                renderBoard();
+                showToast("Removido localmente.", true);
             }
         }
 
@@ -583,7 +686,7 @@
                     container.innerHTML += colHtml;
                 });
             } else {
-                // Status View (Including Backlog)
+                // Status View
                 STATUS_CONFIG.forEach(status => {
                     const colOrders = filteredOrders.filter(o => o.status === status.id);
                     const totalHH = colOrders.reduce((a, b) => a + getOSHomemHora(b), 0);
@@ -722,7 +825,7 @@
                     }
 
                     await saveOrderToCloud(os);
-                    showToast(`Ordem ${os.numero} atualizada com sucesso!`);
+                    showToast(`Ordem ${os.numero} atualizada!`);
                 });
             });
         }
@@ -954,7 +1057,7 @@
 
             await saveOrderToCloud(osData);
             closeModal();
-            showToast(id ? 'Ordem de serviço atualizada na nuvem!' : 'Nova OS salva na nuvem com sucesso!');
+            showToast(id ? 'Ordem de serviço atualizada!' : 'Nova OS salva com sucesso!');
         });
 
         document.getElementById('btn-delete-os').addEventListener('click', async () => {
@@ -962,7 +1065,7 @@
             if (id && confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
                 await deleteOrderFromCloud(id);
                 closeModal();
-                showToast('Ordem de serviço excluída da nuvem.', true);
+                showToast('Ordem de serviço excluída.', true);
             }
         });
 
@@ -1042,7 +1145,7 @@
                         for (const item of imported) {
                             await saveOrderToCloud(item);
                         }
-                        showToast('Dados importados com sucesso para a nuvem!');
+                        showToast('Dados importados com sucesso!');
                     } else {
                         showToast('Formato JSON inválido.', true);
                     }
@@ -1090,6 +1193,7 @@
         document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
 
         window.onload = function() {
+            updateConnectionUI(navigator.onLine);
             initFirebaseRealtimeListener();
         };
     </script>
