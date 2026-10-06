@@ -198,7 +198,7 @@
                     </div>
                 </div>
 
-                <!-- Campo Designar Técnico Programado (Caixas Selecionáveis / Checkboxes + Adicionar) -->
+                <!-- Campo Designar Técnico Programado -->
                 <div class="border border-slate-800 bg-slate-950/80 p-3 rounded-lg space-y-2">
                     <label class="block text-xs font-semibold text-slate-300">
                         <i class="fa-solid fa-user-gear text-sky-400 mr-1"></i> Técnico(s) Programado(s) / Designado(s) *
@@ -392,7 +392,6 @@
             console.warn("Persistência do Firestore não ativada:", err.code);
         });
 
-        // Lista Predefinida de Técnicos
         let PRESET_TECNICOS = [
             "Murilo",
             "Willian",
@@ -425,7 +424,6 @@
         let currentTempChecklist = [];
         let isOnline = navigator.onLine;
 
-        // Inicializar Checkboxes e Dropdowns de Técnicos
         function renderProgrammedTechniciansCheckboxes(selectedTecs = []) {
             const container = document.getElementById('tecnicos-programados-checkboxes');
             const selectPreset = document.getElementById('select-tec-preset');
@@ -438,7 +436,6 @@
                 : (selectedTecs ? selectedTecs.split(',').map(s => s.trim()) : []);
 
             PRESET_TECNICOS.forEach(nome => {
-                // Preencher Checkboxes
                 const isChecked = selectedArray.includes(nome);
                 const label = document.createElement('label');
                 label.className = 'flex items-center gap-2 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 cursor-pointer hover:border-sky-500/50 transition';
@@ -448,7 +445,6 @@
                 `;
                 container.appendChild(label);
 
-                // Preencher Select do Executante
                 const optSel = document.createElement('option');
                 optSel.value = nome;
                 optSel.textContent = nome;
@@ -456,7 +452,6 @@
             });
         }
 
-        // Adicionar novo técnico à lista predefinida
         document.getElementById('btn-add-novo-tecnico-preset').addEventListener('click', () => {
             const input = document.getElementById('input-novo-tecnico-preset');
             const novoNome = input.value.trim();
@@ -464,7 +459,6 @@
             if (novoNome) {
                 if (!PRESET_TECNICOS.includes(novoNome)) {
                     PRESET_TECNICOS.push(novoNome);
-                    // Obter os atualmente marcados
                     const AtualmenteMarcados = getSelectedProgrammedTechnicians();
                     AtualmenteMarcados.push(novoNome);
                     
@@ -479,13 +473,11 @@
             }
         });
 
-        // Retorna array dos técnicos programados selecionados
         function getSelectedProgrammedTechnicians() {
             const checkboxes = document.querySelectorAll('.tec-programado-cb:checked');
             return Array.from(checkboxes).map(cb => cb.value);
         }
 
-        // Retorna a quantidade real de executantes para a OS
         function getOSExecutantesCount(os) {
             if (os.tecnicosExec && os.tecnicosExec.length > 0) {
                 return os.tecnicosExec.length;
@@ -499,14 +491,12 @@
             return 0;
         }
 
-        // Ao selecionar uma opção do dropdown no formulário de executantes
         document.getElementById('select-tec-preset').addEventListener('change', (e) => {
             if (e.target.value) {
                 document.getElementById('input-tec-nome').value = e.target.value;
             }
         });
 
-        // Toast de Notificação
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
@@ -527,7 +517,6 @@
             }, 3000);
         }
 
-        // Canvas de Assinatura
         let canvas, ctx, isDrawing = false;
 
         function initSignaturePad() {
@@ -588,7 +577,7 @@
             }
         }
 
-        function updateConnectionUI(online, isLocalFallback = false) {
+        function updateConnectionUI(online) {
             isOnline = online;
             const badge = document.getElementById('status-cloud-badge');
             const dot = document.getElementById('status-cloud-dot');
@@ -597,7 +586,7 @@
             const modeText = document.getElementById('status-mode-text');
             const modeBadge = document.getElementById('status-mode-badge');
 
-            if (online && !isLocalFallback) {
+            if (online) {
                 badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
                 dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
                 icon.className = "fa-solid fa-cloud text-[11px]";
@@ -614,17 +603,21 @@
             }
         }
 
+        window.addEventListener('online', () => updateConnectionUI(true));
+        window.addEventListener('offline', () => updateConnectionUI(false));
+
         function saveLocalOrders(data) { localStorage.setItem('pcm_orders_backup', JSON.stringify(data)); }
         function loadLocalOrders() { const data = localStorage.getItem('pcm_orders_backup'); return data ? JSON.parse(data) : []; }
 
         function initFirebaseRealtimeListener() {
             ordersRef.onSnapshot((snapshot) => {
-                updateConnectionUI(navigator.onLine && !snapshot.metadata.hasPendingWrites);
+                updateConnectionUI(navigator.onLine);
                 orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 saveLocalOrders(orders);
                 renderBoard();
             }, (error) => {
-                updateConnectionUI(false, true);
+                console.error("Erro na escuta Firestore:", error);
+                updateConnectionUI(false);
                 orders = loadLocalOrders();
                 renderBoard();
             });
@@ -632,23 +625,30 @@
 
         async function saveOrderToCloud(osData) {
             try {
-                const { id, ...dataToSave } = osData;
-                if (id) {
-                    if (isOnline) await ordersRef.doc(id).set(dataToSave, { merge: true });
-                    const idx = orders.findIndex(o => o.id === id);
-                    if (idx !== -1) orders[idx] = { id, ...dataToSave };
+                const cleanData = { ...osData };
+                const docId = cleanData.id;
+                delete cleanData.id; // Remove o atributo ID para evitar poluição no documento do Firestore
+
+                if (docId && !docId.startsWith('local_')) {
+                    if (navigator.onLine) {
+                        await ordersRef.doc(docId).set(cleanData, { merge: true });
+                    }
+                    const idx = orders.findIndex(o => o.id === docId);
+                    if (idx !== -1) orders[idx] = { id: docId, ...cleanData };
                 } else {
-                    if (isOnline) {
-                        const newDoc = await ordersRef.add(dataToSave);
-                        orders.push({ id: newDoc.id, ...dataToSave });
+                    if (navigator.onLine) {
+                        const newDoc = await ordersRef.add(cleanData);
+                        orders.push({ id: newDoc.id, ...cleanData });
                     } else {
-                        orders.push({ id: 'local_' + Date.now(), ...dataToSave });
+                        const tempId = 'local_' + Date.now();
+                        orders.push({ id: tempId, ...cleanData });
                     }
                 }
                 saveLocalOrders(orders);
                 renderBoard();
                 showToast("Ordem de serviço salva com sucesso!");
             } catch (err) {
+                console.error("Erro ao salvar ordem:", err);
                 saveLocalOrders(orders);
                 renderBoard();
                 showToast("Salvo localmente (offline)", "info");
@@ -659,7 +659,7 @@
             if (!id) return;
             if (confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) {
                 try {
-                    if (isOnline && !id.startsWith('local_')) {
+                    if (navigator.onLine && !id.startsWith('local_')) {
                         await ordersRef.doc(id).delete();
                     }
                     orders = orders.filter(o => o.id !== id);
@@ -674,7 +674,6 @@
             }
         }
 
-        // CONFIGURAÇÕES VISUAIS
         function getPriorityBadgeClass(p) {
             switch (p) {
                 case 'Crítica': return 'bg-rose-950/80 text-rose-400 border-rose-600/80';
@@ -696,7 +695,6 @@
             }
         }
 
-        // CÁLCULO REAL DE HH USADO NA ORDEM DE SERVIÇO
         function getOSHomemHora(os) {
             const horasBase = parseFloat(os.horas) || 0;
             if (os.tecnicosExec && os.tecnicosExec.length > 0) {
@@ -705,7 +703,6 @@
                 }, 0);
             }
             
-            // Se não houver apontamentos individuais, multiplica pelo número de técnicos programados
             const numProgramados = getOSExecutantesCount(os);
             return numProgramados > 0 ? (horasBase * numProgramados) : horasBase;
         }
@@ -783,7 +780,6 @@
             document.getElementById('kpi-global-efic').textContent = aderencia + '%';
         }
 
-        // Widget Resumo da Coluna Semanal
         function renderDaySummaryWidget(colOrders) {
             const prog = colOrders.length;
             const conc = colOrders.filter(o => o.status === 'concluido').length;
@@ -887,22 +883,18 @@
             return `
                 <div draggable="true" data-id="${os.id}" onclick="openModalForEdit('${os.id}')" class="os-card bg-[#111827] border border-slate-800 hover:border-sky-500/80 rounded-xl p-3.5 shadow-lg cursor-pointer group transition-all duration-200 hover:shadow-sky-950/20">
                     
-                    <!-- Linha 1: OS ID e Prioridade Badge -->
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-extrabold text-sky-400 tracking-wide font-mono">${os.numero}</span>
                         <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${getPriorityBadgeClass(os.prioridade)}">${os.prioridade}</span>
                     </div>
 
-                    <!-- Linha 2: Equipamento / Tag -->
                     <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-1">
                         <i class="fa-solid fa-cube text-[11px] text-slate-500"></i>
                         <span class="truncate">${os.tag || 'Sem Tag / Área'}</span>
                     </div>
 
-                    <!-- Linha 3: Título da Atividade -->
                     <h3 class="text-xs font-extrabold text-white tracking-tight uppercase leading-snug mb-2 line-clamp-2">${os.titulo}</h3>
 
-                    <!-- Linha 4: Técnico Programado/Designado -->
                     ${tecProgTexto ? `
                         <div class="flex items-center gap-1.5 text-xs font-medium text-amber-300/90 mb-2 bg-amber-950/30 border border-amber-800/40 px-2 py-1 rounded-md">
                             <i class="fa-solid fa-user-gear text-[11px] text-amber-400"></i>
@@ -910,7 +902,6 @@
                         </div>
                     ` : ''}
 
-                    <!-- Linha 5: Quantidade de Executantes e Soma Total HH Usado -->
                     <div class="flex items-center justify-between text-xs text-slate-400 mb-2 bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/60">
                         <span class="flex items-center gap-1.5 font-medium text-slate-300">
                             <i class="fa-solid fa-users text-sky-400 text-[11px]"></i>
@@ -921,14 +912,12 @@
                         </span>
                     </div>
 
-                    <!-- Linha 6: Executantes Apontados -->
                     ${tecs.length > 0 ? `
                         <div class="flex flex-wrap gap-1.5 mb-3">
                             ${tecs.map(t => `<span class="bg-slate-800/90 text-slate-200 text-[10px] font-medium px-2 py-0.5 rounded border border-slate-700/80"><i class="fa-solid fa-user-check text-[9px] text-emerald-400 mr-1"></i>${t.nome}</span>`).join('')}
                         </div>
                     ` : ''}
 
-                    <!-- Linha 7: Checklist / Progresso -->
                     ${totalCheck > 0 ? `
                         <div class="mb-3 space-y-1">
                             <div class="flex justify-between text-[10px] font-semibold text-slate-400">
@@ -941,7 +930,6 @@
                         </div>
                     ` : ''}
 
-                    <!-- Linha 8: Rodapé com Tipo e Tag -->
                     <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
                         <span class="${getTipoManutencaoColorClass(os.tipo)}">${os.tipo}</span>
                         <span class="bg-slate-800 text-slate-300 border border-slate-700/80 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${badgeTag}</span>
@@ -971,7 +959,6 @@
             });
         }
 
-        // CÁLCULOS DE HH
         function calcularHorasTecnico(tecnico, horasOSPadrao) {
             if (tecnico.inicio && tecnico.fim) {
                 const inicio = new Date(tecnico.inicio);
@@ -1181,7 +1168,6 @@
             closeModal();
         });
 
-        // Impressão da OS em PDF
         function printOS(id) {
             const os = orders.find(o => o.id === (id || document.getElementById('os-id').value));
             if (!os) return;
@@ -1284,7 +1270,6 @@
             printArea.classList.add('hidden');
         }
 
-        // Exportação para CSV
         function exportToCSV() {
             if (orders.length === 0) {
                 showToast("Nenhuma OS disponível para exportar", "info");
@@ -1305,7 +1290,6 @@
             showToast("Relatório CSV gerado com sucesso!");
         }
 
-        // Exportação JSON (Backup)
         function exportToJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(orders, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -1317,7 +1301,6 @@
             showToast("Backup JSON exportado!");
         }
 
-        // Importação JSON
         function importFromJSON(event) {
             const fileReader = new FileReader();
             fileReader.onload = async function(e) {
@@ -1340,7 +1323,6 @@
             }
         }
 
-        // Eventos dos Botões da Interface
         document.getElementById('btn-delete-os').addEventListener('click', () => {
             const id = document.getElementById('os-id').value;
             deleteOrderFromCloud(id);
@@ -1355,7 +1337,6 @@
         document.getElementById('btn-export-json').addEventListener('click', exportToJSON);
         document.getElementById('input-import-json').addEventListener('change', importFromJSON);
 
-        // Botões de Abas
         const tabSemanal = document.getElementById('tab-semanal');
         const tabStatus = document.getElementById('tab-status');
 
@@ -1373,7 +1354,6 @@
             renderBoard();
         });
 
-        // Eventos de Filtro
         document.getElementById('filter-search').addEventListener('input', renderBoard);
         document.getElementById('filter-tecnico').addEventListener('change', renderBoard);
         document.getElementById('filter-prioridade').addEventListener('change', renderBoard);
