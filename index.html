@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCM Pro - Gestão e Programação Semanal de Manutenção</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.7); }
+        .drag-over { border: 2px dashed #0284c7 !important; background-color: rgba(2, 132, 199, 0.08) !important; }
+        .dragging { opacity: 0.5; transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col custom-scrollbar">
+
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Brand Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-tr from-sky-500 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-sky-500/20">
+                        <i class="fa-solid fa-wrench text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                            PCM Master <span class="text-xs bg-sky-500/20 text-sky-400 font-semibold px-2 py-0.5 rounded-full border border-sky-500/30">Programação Semanal</span>
+                        </h1>
+                        <p class="text-xs text-slate-400">Gestão e Painel Integrado de Ordens de Serviço</p>
+                    </div>
+                </div>
+
+                <!-- Global KPI Summary Banner -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-900/80 p-2 rounded-xl border border-slate-700/60 text-center text-xs">
+                    <div class="p-2 rounded-lg bg-slate-800/80">
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Programadas</span>
+                        <span id="kpi-global-prog" class="text-lg font-bold text-sky-400">0</span>
+                        <span class="text-[10px] text-slate-500 block">OS Filtradas</span>
+                    </div>
+                    <div class="p-2 rounded-lg bg-slate-800/80">
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Concluídas</span>
+                        <span id="kpi-global-conc" class="text-lg font-bold text-emerald-400">0</span>
+                        <span class="text-[10px] text-slate-500 block">Finalizadas</span>
+                    </div>
+                    <div class="p-2 rounded-lg bg-slate-800/80">
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Pendentes</span>
+                        <span id="kpi-global-pend" class="text-lg font-bold text-amber-400">0</span>
+                        <span class="text-[10px] text-slate-500 block">Em aberto</span>
+                    </div>
+                    <div class="p-2 rounded-lg bg-slate-800/80">
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Total Homem-Hora</span>
+                        <span id="kpi-global-horas" class="text-lg font-bold text-purple-400">0 HH</span>
+                        <span class="text-[10px] text-slate-500 block">Horas Alocadas</span>
+                    </div>
+                    <div class="p-2 rounded-lg bg-slate-800/80 col-span-2 sm:col-span-1">
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Aderência %</span>
+                        <span id="kpi-global-efic" class="text-lg font-bold text-indigo-400">0%</span>
+                        <span class="text-[10px] text-slate-500 block">Taxa de Conclusão</span>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center gap-2">
+                    <button id="btn-nova-os" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1.5 transition shadow-lg shadow-sky-600/20 active:scale-95">
+                        <i class="fa-solid fa-plus text-xs"></i> Nova OS
+                    </button>
+                    <button id="btn-export-csv" title="Exportar Relatório em CSV" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 transition">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                    </button>
+                    <button id="btn-export-json" title="Exportar Backup JSON" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 transition">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <label title="Importar Backup JSON" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-lg text-sm border border-slate-600 cursor-pointer transition">
+                        <i class="fa-solid fa-upload"></i>
+                        <input type="file" id="input-import-json" accept=".json" class="hidden">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="bg-slate-800/50 border-b border-slate-700/80 px-4 py-3 sticky top-[69px] z-20 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            
+            <!-- View Selector Tabs -->
+            <div class="flex p-1 bg-slate-900/90 rounded-lg border border-slate-700/80 self-start md:self-auto">
+                <button id="tab-semanal" class="px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow">
+                    <i class="fa-solid fa-calendar-week"></i> Agenda Semanal
+                </button>
+                <button id="tab-status" class="px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-list-check"></i> Visão por Status
+                </button>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="flex flex-wrap items-center gap-2 flex-1 max-w-3xl justify-end">
+                <!-- Search Box -->
+                <div class="relative flex-1 min-w-[160px] max-w-xs">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="filter-search" placeholder="Buscar OS, Tag, Atividade..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 placeholder-slate-500">
+                </div>
+
+                <!-- Technician Filter -->
+                <select id="filter-tecnico" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                    <option value="">Todos os Técnicos</option>
+                </select>
+
+                <!-- Priority Filter -->
+                <select id="filter-prioridade" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                    <option value="">Todas Prioridades</option>
+                    <option value="Crítica">Crítica</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Média">Média</option>
+                    <option value="Baixa">Baixa</option>
+                </select>
+
+                <!-- Type Filter -->
+                <select id="filter-tipo" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                    <option value="">Todos os Tipos</option>
+                    <option value="Preventiva">Preventiva</option>
+                    <option value="Corretiva">Corretiva</option>
+                    <option value="Preditiva">Preditiva</option>
+                    <option value="Melhoria">Melhoria</option>
+                    <option value="Inspeção">Inspeção/5S</option>
+                </select>
+
+                <button id="btn-limpar-filtros" title="Limpar Filtros" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-300">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <main class="flex-1 p-4 overflow-x-auto">
+        <div id="board-container" class="flex gap-4 min-w-max pb-4 items-start">
+            <!-- Dynamic Kanban Columns populated by JS -->
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div id="modal-os" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden my-8">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-700 bg-slate-850">
+                <h3 id="modal-title" class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-file-pen text-sky-400"></i> Cadastrar Nova Ordem de Serviço
+                </h3>
+                <button id="btn-close-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-os" class="p-5 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                <input type="hidden" id="os-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Nº OS / Código *</label>
+                        <input type="text" id="os-numero" required placeholder="OS-2026-001" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Tag do Equipamento *</label>
+                        <input type="text" id="os-tag" required placeholder="EQP-BOMBA-02" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <!-- Multi-Technician Allocation Section -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1 flex justify-between items-center">
+                        <span><i class="fa-solid fa-users-gear text-sky-400 mr-1"></i> Equipe / Técnicos Alocados *</span>
+                        <span id="hh-preview-modal" class="text-[11px] font-mono text-purple-300">0.0 HH Totais</span>
+                    </label>
+                    
+                    <!-- Selected Technicians Container -->
+                    <div id="tecnicos-selected-container" class="flex flex-wrap items-center gap-1.5 p-2 bg-slate-900 border border-slate-700 rounded-lg min-h-[42px] mb-2">
+                        <!-- Chips inserted via JS -->
+                    </div>
+
+                    <!-- Input and Quick Add Options -->
+                    <div class="flex gap-2">
+                        <input type="text" id="input-add-tecnico" placeholder="Digite o nome do técnico e pressione Enter..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <button type="button" id="btn-add-tecnico" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">
+                            <i class="fa-solid fa-user-plus mr-1"></i> Adicionar
+                        </button>
+                    </div>
+
+                    <!-- Quick Suggestions Chips -->
+                    <div class="mt-2 flex flex-wrap items-center gap-1 text-[10px]">
+                        <span class="text-slate-400">Sugestões rápidas:</span>
+                        <button type="button" onclick="addTecnicoChip('Elan')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Elan</button>
+                        <button type="button" onclick="addTecnicoChip('Willian')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Willian</button>
+                        <button type="button" onclick="addTecnicoChip('François')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ François</button>
+                        <button type="button" onclick="addTecnicoChip('José Xavier')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ José Xavier</button>
+                        <button type="button" onclick="addTecnicoChip('Murilo')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700">+ Murilo</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Título da Atividade *</label>
+                    <input type="text" id="os-titulo" required placeholder="Inspeção Preventiva e Troca de Rolamentos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Descrição Detalhada</label>
+                    <textarea id="os-descricao" rows="2" placeholder="Detalhes técnicos, procedimentos específicos de segurança..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Prioridade *</label>
+                        <select id="os-prioridade" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média" selected>Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Tipo de Serviço *</label>
+                        <select id="os-tipo" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                            <option value="Preventiva">Preventiva</option>
+                            <option value="Corretiva">Corretiva</option>
+                            <option value="Preditiva">Preditiva</option>
+                            <option value="Melhoria">Melhoria</option>
+                            <option value="Inspeção">Inspeção/5S</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Duração Est. (Horas)</label>
+                        <input type="number" id="os-horas" step="0.5" min="0.5" value="2.0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Dia da Programação</label>
+                        <select id="os-dia" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                            <option value="">Sem Dia (Backlog)</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                            <option value="sabado">Sábado</option>
+                            <option value="domingo">Domingo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Status do Processo</label>
+                    <select id="os-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <option value="backlog">Backlog (Não Programado)</option>
+                        <option value="programado">Programado</option>
+                        <option value="andamento">Em Andamento</option>
+                        <option value="aguardando">Aguardando Peças/Liberação</option>
+                        <option value="concluido">Concluído / Finalizado</option>
+                    </select>
+                </div>
+
+                <!-- Checklist Section inside Modal -->
+                <div class="border-t border-slate-700/80 pt-3">
+                    <label class="block text-xs font-semibold text-slate-300 mb-2 flex justify-between items-center">
+                        <span><i class="fa-solid fa-list-check text-sky-400 mr-1"></i> Checklist de Tarefas Internas</span>
+                        <span id="checklist-modal-count" class="text-[10px] text-slate-400">0/0</span>
+                    </label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="input-new-check-item" placeholder="Adicionar sub-tarefa (ex: Bloqueio LOTO)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <button type="button" id="btn-add-check-item" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">Adicionar</button>
+                    </div>
+                    <ul id="modal-checklist-items" class="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar"></ul>
+                </div>
+
+                <!-- Observations/History Log inside Modal -->
+                <div class="border-t border-slate-700/80 pt-3">
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">
+                        <i class="fa-solid fa-comments text-amber-400 mr-1"></i> Histórico / Apontamentos Técnicos
+                    </label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="input-new-history" placeholder="Adicionar apontamento ou observação..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                        <button type="button" id="btn-add-history" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200">Apontar</button>
+                    </div>
+                    <div id="modal-history-list" class="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-700/50"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="border-t border-slate-700/80 pt-4 flex items-center justify-between">
+                    <button type="button" id="btn-delete-os" class="bg-rose-900/40 hover:bg-rose-900/80 text-rose-300 border border-rose-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
+                        <i class="fa-solid fa-trash mr-1"></i> Excluir OS
+                    </button>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="button" id="btn-cancel-modal" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium transition">Cancelar</button>
+                        <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white px-5 py-2 rounded-lg text-xs font-medium transition shadow-lg shadow-sky-600/20">Salvar Ordem</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-sky-500/50 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-medium">Operação realizada com sucesso!</span>
+    </div>
+
+    <script>
+        // Days Configuration
+        const DAYS_CONFIG = [
+            { id: 'segunda', title: 'Segunda-feira', short: 'SEG' },
+            { id: 'terca', title: 'Terça-feira', short: 'TER' },
+            { id: 'quarta', title: 'Quarta-feira', short: 'QUA' },
+            { id: 'quinta', title: 'Quinta-feira', short: 'QUI' },
+            { id: 'sexta', title: 'Sexta-feira', short: 'SEX' },
+            { id: 'sabado', title: 'Sábado', short: 'SAB' },
+            { id: 'domingo', title: 'Domingo', short: 'DOM' }
+        ];
+
+        // Status Configuration
+        const STATUS_CONFIG = [
+            { id: 'backlog', title: 'Backlog (Pendente)', color: 'border-slate-500' },
+            { id: 'programado', title: 'Programado', color: 'border-sky-500' },
+            { id: 'andamento', title: 'Em Andamento', color: 'border-amber-500' },
+            { id: 'aguardando', title: 'Aguardando Peças', color: 'border-purple-500' },
+            { id: 'concluido', title: 'Concluído', color: 'border-emerald-500' }
+        ];
+
+        const INITIAL_ORDERS = [];
+
+        let orders = JSON.parse(localStorage.getItem('pcm_orders_db_v3')) || INITIAL_ORDERS;
+        let currentView = 'semanal'; 
+        let currentSelectedTecnicos = [];
+        let currentTempChecklist = [];
+        let currentTempHistory = [];
+
+        function saveOrdersToStorage() {
+            localStorage.setItem('pcm_orders_db_v3', JSON.stringify(orders));
+            renderBoard();
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+            if (isError) {
+                toastIcon.className = "fa-solid fa-circle-exclamation text-rose-400 text-lg";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function getPriorityBadgeClass(prioridade) {
+            switch (prioridade) {
+                case 'Crítica': return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+                case 'Alta': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+                case 'Média': return 'bg-sky-500/20 text-sky-400 border-sky-500/30';
+                default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+            }
+        }
+
+        function getTypeBadgeClass(tipo) {
+            switch (tipo) {
+                case 'Preventiva': return 'text-sky-400';
+                case 'Corretiva': return 'text-rose-400';
+                case 'Preditiva': return 'text-purple-400';
+                case 'Melhoria': return 'text-emerald-400';
+                default: return 'text-amber-400';
+            }
+        }
+
+        function getOSHomemHora(os) {
+            const horasBase = parseFloat(os.horas) || 0;
+            const tecsCount = (os.tecnicos && os.tecnicos.length > 0) ? os.tecnicos.length : 1;
+            return horasBase * tecsCount;
+        }
+
+        function getFilteredOrders() {
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const tecnico = document.getElementById('filter-tecnico').value;
+            const prioridade = document.getElementById('filter-prioridade').value;
+            const tipo = document.getElementById('filter-tipo').value;
+
+            return orders.filter(os => {
+                const tecsString = (os.tecnicos || []).join(' ').toLowerCase();
+                const matchSearch = !search || 
+                    os.numero.toLowerCase().includes(search) || 
+                    os.tag.toLowerCase().includes(search) || 
+                    os.titulo.toLowerCase().includes(search) || 
+                    tecsString.includes(search);
+                
+                const matchTecnico = !tecnico || (os.tecnicos && os.tecnicos.includes(tecnico));
+                const matchPrioridade = !prioridade || os.prioridade === prioridade;
+                const matchTipo = !tipo || os.tipo === tipo;
+
+                return matchSearch && matchTecnico && matchPrioridade && matchTipo;
+            });
+        }
+
+        function populateTechniciansFilter() {
+            const select = document.getElementById('filter-tecnico');
+            const currentValue = select.value;
+            
+            let allTecs = [];
+            orders.forEach(o => {
+                if (o.tecnicos && Array.isArray(o.tecnicos)) {
+                    allTecs.push(...o.tecnicos);
+                }
+            });
+            const tecs = [...new Set(allTecs)].sort();
+            
+            select.innerHTML = '<option value="">Todos os Técnicos</option>';
+            tecs.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                select.appendChild(opt);
+            });
+            select.value = currentValue;
+        }
+
+        function updateGlobalKPIs() {
+            const filtered = getFilteredOrders();
+            const totalProg = filtered.length;
+            const totalConc = filtered.filter(o => o.status === 'concluido').length;
+            const totalPend = filtered.filter(o => o.status !== 'concluido').length;
+            const totalHH = filtered.reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
+            const aderencia = totalProg > 0 ? Math.round((totalConc / totalProg) * 100) : 0;
+
+            document.getElementById('kpi-global-prog').textContent = totalProg;
+            document.getElementById('kpi-global-conc').textContent = totalConc;
+            document.getElementById('kpi-global-pend').textContent = totalPend;
+            document.getElementById('kpi-global-horas').textContent = totalHH.toFixed(1) + ' HH';
+            document.getElementById('kpi-global-efic').textContent = aderencia + '%';
+        }
+
+        function calculateDayMetrics(dayId, filteredList) {
+            const dayOrders = filteredList.filter(o => o.dia === dayId);
+            const totalProg = dayOrders.length;
+            const totalConc = dayOrders.filter(o => o.status === 'concluido').length;
+            const totalPend = dayOrders.filter(o => o.status !== 'concluido').length;
+            const hhPrev = dayOrders.reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
+            const hhExec = dayOrders.filter(o => o.status === 'concluido').reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
+            const efic = totalProg > 0 ? Math.round((totalConc / totalProg) * 100) : 0;
+
+            return { totalProg, totalConc, totalPend, hhPrev, hhExec, efic };
+        }
+
+        function renderBoard() {
+            populateTechniciansFilter();
+            updateGlobalKPIs();
+            const container = document.getElementById('board-container');
+            container.innerHTML = '';
+
+            const filteredOrders = getFilteredOrders();
+
+            if (currentView === 'semanal') {
+                DAYS_CONFIG.forEach(day => {
+                    const metrics = calculateDayMetrics(day.id, filteredOrders);
+                    const colOrders = filteredOrders.filter(o => o.dia === day.id);
+
+                    const colHtml = `
+                        <div class="w-80 flex-shrink-0 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
+                            <div class="p-3 border-b border-slate-700/80 bg-slate-800/90 rounded-t-xl sticky top-0 z-10">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h2 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                                        ${day.title}
+                                    </h2>
+                                    <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-600">
+                                        ${colOrders.length} OS
+                                    </span>
+                                </div>
+
+                                <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-700/70 space-y-2">
+                                    <div class="grid grid-cols-3 gap-1 text-center">
+                                        <div class="bg-slate-800/70 p-1.5 rounded">
+                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Prog.</span>
+                                            <span class="text-xs font-bold text-sky-400">${metrics.totalProg}</span>
+                                        </div>
+                                        <div class="bg-slate-800/70 p-1.5 rounded">
+                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Conc.</span>
+                                            <span class="text-xs font-bold text-emerald-400">${metrics.totalConc}</span>
+                                        </div>
+                                        <div class="bg-slate-800/70 p-1.5 rounded">
+                                            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Pend.</span>
+                                            <span class="text-xs font-bold text-amber-400">${metrics.totalPend}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                                        <span>Carga HH: <b class="text-purple-300">${metrics.hhExec.toFixed(1)} HH</b> / ${metrics.hhPrev.toFixed(1)} HH</span>
+                                        <span class="font-bold ${metrics.efic === 100 ? 'text-emerald-400' : 'text-sky-400'}">${metrics.efic}% Taxa</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-sky-500 to-emerald-400 h-1.5 rounded-full transition-all duration-500" style="width: ${metrics.efic}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar kanban-dropzone" data-day="${day.id}">
+                                ${colOrders.map(os => renderCardHTML(os)).join('')}
+                                ${colOrders.length === 0 ? '<div class="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-700/50 rounded-lg">Arraste OS para este dia</div>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += colHtml;
+                });
+            } else {
+                // Status View (Including Backlog)
+                STATUS_CONFIG.forEach(status => {
+                    const colOrders = filteredOrders.filter(o => o.status === status.id);
+                    const totalHH = colOrders.reduce((a, b) => a + getOSHomemHora(b), 0);
+
+                    const colHtml = `
+                        <div class="w-80 flex-shrink-0 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
+                            <div class="p-3 border-b border-slate-700/80 bg-slate-800/90 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
+                                <div>
+                                    <h2 class="font-bold text-slate-200 text-sm flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full ${status.id === 'backlog' ? 'bg-slate-400' : status.id === 'concluido' ? 'bg-emerald-400' : 'bg-sky-400'}"></span>
+                                        ${status.title}
+                                    </h2>
+                                    <span class="text-[10px] text-slate-400">Total: ${totalHH.toFixed(1)} HH</span>
+                                </div>
+                                <span class="text-xs bg-slate-700/80 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-600">
+                                    ${colOrders.length}
+                                </span>
+                            </div>
+
+                            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar kanban-dropzone" data-status="${status.id}">
+                                ${colOrders.map(os => renderCardHTML(os)).join('')}
+                                ${colOrders.length === 0 ? '<div class="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-700/50 rounded-lg">Sem ordens neste status</div>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += colHtml;
+                });
+            }
+
+            attachDragAndDrop();
+        }
+
+        function renderCardHTML(os) {
+            const completedChecks = (os.checklist || []).filter(c => c.done).length;
+            const totalChecks = (os.checklist || []).length;
+            const checkPct = totalChecks > 0 ? Math.round((completedChecks / totalChecks) * 100) : 0;
+            const diaNome = os.dia ? (DAYS_CONFIG.find(d => d.id === os.dia)?.short || 'N/A') : 'N/P';
+            const tecsList = (os.tecnicos && os.tecnicos.length > 0) ? os.tecnicos : ['Não Atribuído'];
+            const hhTotal = getOSHomemHora(os);
+
+            return `
+                <div draggable="true" data-id="${os.id}" class="os-card bg-slate-900 border border-slate-700/90 hover:border-sky-500/80 rounded-xl p-3 shadow-md transition-all hover:shadow-lg cursor-grab active:cursor-grabbing group">
+                    <div class="flex items-start justify-between gap-1 mb-1.5">
+                        <span class="text-xs font-bold text-sky-400 font-mono tracking-tight">${os.numero}</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClass(os.prioridade)}">${os.prioridade}</span>
+                            <button onclick="openModalForEdit('${os.id}')" class="text-slate-500 hover:text-slate-200 p-1 rounded transition opacity-0 group-hover:opacity-100">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1">
+                        <i class="fa-solid fa-cube text-[10px] text-slate-500"></i> ${os.tag}
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-100 line-clamp-2 mb-2 leading-snug">${os.titulo}</h3>
+
+                    <div class="flex flex-col gap-1 text-[11px] text-slate-400 mb-2 border-y border-slate-800 py-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-users text-slate-500"></i> ${tecsList.length} Técnico(s)</span>
+                            <span class="font-medium text-purple-300"><i class="fa-regular fa-clock text-slate-500 mr-0.5"></i>${hhTotal.toFixed(1)} HH (${os.horas}h/tec)</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            ${tecsList.map(t => `<span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded border border-slate-700/60">${t}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    ${totalChecks > 0 ? `
+                    <div class="mb-2">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
+                            <span>Checklist</span>
+                            <span class="font-semibold">${completedChecks}/${totalChecks} (${checkPct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
+                            <div class="bg-sky-500 h-1 rounded-full" style="width: ${checkPct}%"></div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="flex items-center justify-between pt-1 text-[10px]">
+                        <span class="font-medium ${getTypeBadgeClass(os.tipo)}">${os.tipo}</span>
+                        <span class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 border border-slate-700/60 font-semibold">${diaNome}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachDragAndDrop() {
+            const cards = document.querySelectorAll('.os-card');
+            const dropzones = document.querySelectorAll('.kanban-dropzone');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', card.dataset.id);
+                    card.classList.add('dragging');
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                });
+            });
+
+            dropzones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text/plain');
+                    const os = orders.find(o => o.id === id);
+
+                    if (!os) return;
+
+                    const targetDay = zone.dataset.day;
+                    const targetStatus = zone.dataset.status;
+
+                    if (targetDay) {
+                        os.dia = targetDay;
+                        if (os.status === 'backlog') {
+                            os.status = 'programado';
+                        }
+                    }
+
+                    if (targetStatus) {
+                        os.status = targetStatus;
+                        // Se for movido para a coluna de Backlog, remover a programação do dia
+                        if (targetStatus === 'backlog') {
+                            os.dia = '';
+                        }
+                    }
+
+                    saveOrdersToStorage();
+                    showToast(`Ordem ${os.numero} atualizada com sucesso!`);
+                });
+            });
+        }
+
+        function renderSelectedTecnicos() {
+            const container = document.getElementById('tecnicos-selected-container');
+            container.innerHTML = '';
+
+            if (currentSelectedTecnicos.length === 0) {
+                container.innerHTML = '<span class="text-xs text-slate-500 italic">Nenhum técnico alocado. Adicione abaixo.</span>';
+            } else {
+                currentSelectedTecnicos.forEach((tec, idx) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'bg-sky-950/80 text-sky-300 border border-sky-700/80 text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium';
+                    chip.innerHTML = `
+                        <i class="fa-solid fa-user-gear text-[10px]"></i> ${tec}
+                        <button type="button" onclick="removeTecnicoChip(${idx})" class="hover:text-rose-400 ml-1 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    container.appendChild(chip);
+                });
+            }
+
+            updateModalHHPreview();
+        }
+
+        function addTecnicoChip(nome) {
+            const cleanName = nome.trim();
+            if (cleanName && !currentSelectedTecnicos.includes(cleanName)) {
+                currentSelectedTecnicos.push(cleanName);
+                renderSelectedTecnicos();
+            }
+        }
+
+        function removeTecnicoChip(index) {
+            currentSelectedTecnicos.splice(index, 1);
+            renderSelectedTecnicos();
+        }
+
+        function updateModalHHPreview() {
+            const horas = parseFloat(document.getElementById('os-horas').value) || 0;
+            const count = currentSelectedTecnicos.length || 1;
+            const hhTotal = horas * count;
+            document.getElementById('hh-preview-modal').textContent = `${hhTotal.toFixed(1)} HH Totais (${horas}h x ${count} tec)`;
+        }
+
+        function openModalForCreate() {
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-plus-circle text-sky-400"></i> Cadastrar Nova Ordem de Serviço';
+            document.getElementById('form-os').reset();
+            document.getElementById('os-id').value = '';
+            document.getElementById('btn-delete-os').classList.add('hidden');
+            
+            document.getElementById('os-numero').value = `OS-2026-${String(orders.length + 1).padStart(2, '0')}`;
+            document.getElementById('os-dia').value = '';
+            document.getElementById('os-status').value = 'backlog';
+            
+            currentSelectedTecnicos = [];
+            currentTempChecklist = [];
+            currentTempHistory = [];
+
+            renderSelectedTecnicos();
+            renderModalChecklist();
+            renderModalHistory();
+
+            document.getElementById('modal-os').classList.remove('hidden');
+        }
+
+        function openModalForEdit(id) {
+            const os = orders.find(o => o.id === id);
+            if (!os) return;
+
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-file-pen text-sky-400"></i> Editar Ordem de Serviço';
+            document.getElementById('os-id').value = os.id;
+            document.getElementById('os-numero').value = os.numero;
+            document.getElementById('os-tag').value = os.tag;
+            document.getElementById('os-titulo').value = os.titulo;
+            document.getElementById('os-descricao').value = os.descricao || '';
+            document.getElementById('os-prioridade').value = os.prioridade;
+            document.getElementById('os-tipo').value = os.tipo;
+            document.getElementById('os-horas').value = os.horas;
+            document.getElementById('os-dia').value = os.status === 'backlog' ? '' : (os.dia || '');
+            document.getElementById('os-status').value = os.status;
+
+            document.getElementById('btn-delete-os').classList.remove('hidden');
+
+            currentSelectedTecnicos = [...(os.tecnicos || [])];
+            currentTempChecklist = [...(os.checklist || [])];
+            currentTempHistory = [...(os.historico || [])];
+
+            renderSelectedTecnicos();
+            renderModalChecklist();
+            renderModalHistory();
+
+            document.getElementById('modal-os').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-os').classList.add('hidden');
+        }
+
+        function renderModalChecklist() {
+            const list = document.getElementById('modal-checklist-items');
+            const countLabel = document.getElementById('checklist-modal-count');
+            list.innerHTML = '';
+
+            const doneCount = currentTempChecklist.filter(c => c.done).length;
+            countLabel.textContent = `${doneCount}/${currentTempChecklist.length}`;
+
+            currentTempChecklist.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between bg-slate-900/80 px-2.5 py-1.5 rounded border border-slate-700/60 text-xs';
+                li.innerHTML = `
+                    <label class="flex items-center gap-2 cursor-pointer flex-1">
+                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleCheckItem(${index})" class="rounded border-slate-700 bg-slate-800 text-sky-500 focus:ring-0">
+                        <span class="${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.title}</span>
+                    </label>
+                    <button type="button" onclick="removeCheckItem(${index})" class="text-slate-500 hover:text-rose-400 p-1">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function toggleCheckItem(index) {
+            currentTempChecklist[index].done = !currentTempChecklist[index].done;
+            renderModalChecklist();
+        }
+
+        function removeCheckItem(index) {
+            currentTempChecklist.splice(index, 1);
+            renderModalChecklist();
+        }
+
+        function renderModalHistory() {
+            const list = document.getElementById('modal-history-list');
+            list.innerHTML = '';
+
+            if (currentTempHistory.length === 0) {
+                list.innerHTML = '<span class="text-slate-500 italic block text-center py-1">Nenhum apontamento feito ainda.</span>';
+                return;
+            }
+
+            currentTempHistory.forEach(h => {
+                const item = document.createElement('div');
+                item.className = 'border-b border-slate-800 last:border-none pb-1 mb-1';
+                item.innerHTML = `
+                    <div class="flex justify-between text-[10px] text-slate-400">
+                        <span class="font-bold text-sky-400">${h.autor}</span>
+                        <span>${h.data}</span>
+                    </div>
+                    <p class="text-slate-200 mt-0.5">${h.texto}</p>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Sincronização automática de Status vs Dia da Programação no Formulário
+        document.getElementById('os-status').addEventListener('change', (e) => {
+            const diaSelect = document.getElementById('os-dia');
+            if (e.target.value === 'backlog') {
+                diaSelect.value = '';
+            } else if (!diaSelect.value) {
+                diaSelect.value = 'segunda';
+            }
+        });
+
+        document.getElementById('os-dia').addEventListener('change', (e) => {
+            const statusSelect = document.getElementById('os-status');
+            if (!e.target.value) {
+                statusSelect.value = 'backlog';
+            } else if (statusSelect.value === 'backlog') {
+                statusSelect.value = 'programado';
+            }
+        });
+
+        document.getElementById('btn-add-tecnico').addEventListener('click', () => {
+            const input = document.getElementById('input-add-tecnico');
+            if (input.value.trim()) {
+                addTecnicoChip(input.value);
+                input.value = '';
+            }
+        });
+
+        document.getElementById('input-add-tecnico').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.target.value.trim()) {
+                    addTecnicoChip(e.target.value);
+                    e.target.value = '';
+                }
+            }
+        });
+
+        document.getElementById('os-horas').addEventListener('input', updateModalHHPreview);
+
+        document.getElementById('form-os').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (currentSelectedTecnicos.length === 0) {
+                showToast('Selecione ao menos 1 técnico para a Ordem de Serviço!', true);
+                return;
+            }
+
+            const id = document.getElementById('os-id').value;
+            const statusValue = document.getElementById('os-status').value;
+            let diaValue = document.getElementById('os-dia').value;
+
+            // Garantia de regra: Se estiver em Backlog, não pode ter dia de programação
+            if (statusValue === 'backlog') {
+                diaValue = '';
+            }
+
+            const osData = {
+                id: id || Date.now().toString(),
+                numero: document.getElementById('os-numero').value,
+                tag: document.getElementById('os-tag').value,
+                tecnicos: [...currentSelectedTecnicos],
+                titulo: document.getElementById('os-titulo').value,
+                descricao: document.getElementById('os-descricao').value,
+                prioridade: document.getElementById('os-prioridade').value,
+                tipo: document.getElementById('os-tipo').value,
+                horas: parseFloat(document.getElementById('os-horas').value) || 1,
+                dia: diaValue,
+                status: statusValue,
+                checklist: currentTempChecklist,
+                historico: currentTempHistory
+            };
+
+            if (id) {
+                const idx = orders.findIndex(o => o.id === id);
+                if (idx !== -1) orders[idx] = osData;
+            } else {
+                orders.push(osData);
+            }
+
+            saveOrdersToStorage();
+            closeModal();
+            showToast(id ? 'Ordem de serviço atualizada!' : 'Nova OS cadastrada com sucesso!');
+        });
+
+        document.getElementById('btn-delete-os').addEventListener('click', () => {
+            const id = document.getElementById('os-id').value;
+            if (id && confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
+                orders = orders.filter(o => o.id !== id);
+                saveOrdersToStorage();
+                closeModal();
+                showToast('Ordem de serviço excluída.', true);
+            }
+        });
+
+        document.getElementById('btn-add-check-item').addEventListener('click', () => {
+            const input = document.getElementById('input-new-check-item');
+            if (input.value.trim()) {
+                currentTempChecklist.push({
+                    id: Date.now().toString(),
+                    title: input.value.trim(),
+                    done: false
+                });
+                input.value = '';
+                renderModalChecklist();
+            }
+        });
+
+        document.getElementById('btn-add-history').addEventListener('click', () => {
+            const input = document.getElementById('input-new-history');
+            const autorText = currentSelectedTecnicos.length > 0 ? currentSelectedTecnicos.join(', ') : 'PCM';
+            if (input.value.trim()) {
+                const now = new Date();
+                const dataStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                currentTempHistory.unshift({
+                    data: dataStr,
+                    autor: autorText,
+                    texto: input.value.trim()
+                });
+                input.value = '';
+                renderModalHistory();
+            }
+        });
+
+        document.getElementById('tab-semanal').addEventListener('click', () => {
+            currentView = 'semanal';
+            document.getElementById('tab-semanal').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow';
+            document.getElementById('tab-status').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white';
+            renderBoard();
+        });
+
+        document.getElementById('tab-status').addEventListener('click', () => {
+            currentView = 'status';
+            document.getElementById('tab-status').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow';
+            document.getElementById('tab-semanal').className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white';
+            renderBoard();
+        });
+
+        ['filter-search', 'filter-tecnico', 'filter-prioridade', 'filter-tipo'].forEach(id => {
+            document.getElementById(id).addEventListener('change', renderBoard);
+            document.getElementById(id).addEventListener('keyup', renderBoard);
+        });
+
+        document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-tecnico').value = '';
+            document.getElementById('filter-prioridade').value = '';
+            document.getElementById('filter-tipo').value = '';
+            renderBoard();
+        });
+
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(orders, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `pcm_backup_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Backup do banco de dados exportado!');
+        });
+
+        document.getElementById('input-import-json').addEventListener('change', (e) => {
+            const fileReader = new FileReader();
+            fileReader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        orders = imported;
+                        saveOrdersToStorage();
+                        showToast('Dados importados com sucesso!');
+                    } else {
+                        showToast('Formato JSON inválido.', true);
+                    }
+                } catch (err) {
+                    showToast('Erro ao ler o arquivo JSON.', true);
+                }
+            };
+            if (e.target.files[0]) fileReader.readAsText(e.target.files[0]);
+        });
+
+        document.getElementById('btn-export-csv').addEventListener('click', () => {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "OS,Tag,Titulo,Tecnicos,HH_Total,Prioridade,Tipo,Horas_Tecnico,Dia,Status\n";
+
+            orders.forEach(o => {
+                const tecs = (o.tecnicos || []).join(" | ");
+                const hhTotal = getOSHomemHora(o);
+                const row = [
+                    `"${o.numero}"`,
+                    `"${o.tag}"`,
+                    `"${o.titulo}"`,
+                    `"${tecs}"`,
+                    hhTotal,
+                    `"${o.prioridade}"`,
+                    `"${o.tipo}"`,
+                    o.horas,
+                    `"${o.dia}"`,
+                    `"${o.status}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `relatorio_manutencao_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('Relatório CSV gerado!');
+        });
+
+        document.getElementById('btn-nova-os').addEventListener('click', openModalForCreate);
+        document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+        document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+
+        window.onload = function() {
+            renderBoard();
+        };
+    </script>
+</body>
+</html>
