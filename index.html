@@ -351,6 +351,9 @@
                         <button type="button" id="btn-print-os" class="bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
                             <i class="fa-solid fa-print mr-1"></i> Imprimir OS (PDF)
                         </button>
+                        <button type="button" id="btn-duplicate-os" class="bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/50 px-3 py-2 rounded-lg text-xs font-medium hidden transition">
+                            <i class="fa-solid fa-copy mr-1"></i> Duplicar OS
+                        </button>
                     </div>
                     <div class="flex items-center gap-2 ml-auto">
                         <button type="button" id="btn-cancel-modal" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium transition border border-slate-700">Cancelar</button>
@@ -623,43 +626,39 @@
             });
         }
 
-async function saveOrderToCloud(osData) {
-    try {
-        const cleanData = { ...osData };
-        const docId = cleanData.id;
-        delete cleanData.id; // Remove o ID para não poluir o documento no Firestore
+        async function saveOrderToCloud(osData) {
+            try {
+                const cleanData = { ...osData };
+                const docId = cleanData.id;
+                delete cleanData.id;
 
-        if (docId && !docId.startsWith('local_')) {
-            if (navigator.onLine) {
-                // Atualiza o documento no Firestore; o listener onSnapshot atualizará o quadro
-                await ordersRef.doc(docId).set(cleanData, { merge: true });
-            } else {
-                // Atualização offline local
-                const idx = orders.findIndex(o => o.id === docId);
-                if (idx !== -1) orders[idx] = { id: docId, ...cleanData };
+                if (docId && !docId.startsWith('local_')) {
+                    if (navigator.onLine) {
+                        await ordersRef.doc(docId).set(cleanData, { merge: true });
+                    } else {
+                        const idx = orders.findIndex(o => o.id === docId);
+                        if (idx !== -1) orders[idx] = { id: docId, ...cleanData };
+                        saveLocalOrders(orders);
+                        renderBoard();
+                    }
+                } else {
+                    if (navigator.onLine) {
+                        await ordersRef.add(cleanData);
+                    } else {
+                        const tempId = 'local_' + Date.now();
+                        orders.push({ id: tempId, ...cleanData });
+                        saveLocalOrders(orders);
+                        renderBoard();
+                    }
+                }
+                showToast("Ordem de serviço salva com sucesso!");
+            } catch (err) {
+                console.error("Erro ao salvar ordem:", err);
                 saveLocalOrders(orders);
                 renderBoard();
-            }
-        } else {
-            if (navigator.onLine) {
-                // Ao criar online, apenas envia ao Firestore. O onSnapshot receberá o novo item sem duplicar.
-                await ordersRef.add(cleanData);
-            } else {
-                // Inserção offline local
-                const tempId = 'local_' + Date.now();
-                orders.push({ id: tempId, ...cleanData });
-                saveLocalOrders(orders);
-                renderBoard();
+                showToast("Erro ao salvar ordem na nuvem", "danger");
             }
         }
-        showToast("Ordem de serviço salva com sucesso!");
-    } catch (err) {
-        console.error("Erro ao salvar ordem:", err);
-        saveLocalOrders(orders);
-        renderBoard();
-        showToast("Erro ao salvar ordem na nuvem", "danger");
-    }
-}
 
         async function deleteOrderFromCloud(id) {
             if (!id) return;
@@ -678,6 +677,21 @@ async function saveOrderToCloud(osData) {
                     showToast("Erro ao excluir OS", "danger");
                 }
             }
+        }
+
+        function duplicateCurrentOS() {
+            document.getElementById('os-id').value = ''; 
+            const currentNum = document.getElementById('os-numero').value;
+            document.getElementById('os-numero').value = `${currentNum}-CLONE`;
+            
+            clearSignature();
+            
+            document.getElementById('btn-delete-os').classList.add('hidden');
+            document.getElementById('btn-print-os').classList.add('hidden');
+            document.getElementById('btn-duplicate-os').classList.add('hidden');
+            
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-copy text-amber-400"></i> Duplicar Ordem de Serviço';
+            showToast("OS duplicada. Altere o número/dados se necessário e clique em Salvar.", "info");
         }
 
         function getPriorityBadgeClass(p) {
@@ -1070,6 +1084,7 @@ async function saveOrderToCloud(osData) {
             document.getElementById('select-tec-preset').value = '';
             document.getElementById('btn-delete-os').classList.add('hidden');
             document.getElementById('btn-print-os').classList.add('hidden');
+            document.getElementById('btn-duplicate-os').classList.add('hidden');
             document.getElementById('os-numero').value = `OS-2026-${String(orders.length + 1).padStart(2, '0')}`;
             currentTecnicosExecucao = [];
             currentTempChecklist = [];
@@ -1102,6 +1117,7 @@ async function saveOrderToCloud(osData) {
 
             document.getElementById('btn-delete-os').classList.remove('hidden');
             document.getElementById('btn-print-os').classList.remove('hidden');
+            document.getElementById('btn-duplicate-os').classList.remove('hidden');
 
             currentTecnicosExecucao = os.tecnicosExec || [];
             currentTempChecklist = os.checklist || [];
@@ -1335,6 +1351,7 @@ async function saveOrderToCloud(osData) {
         });
 
         document.getElementById('btn-print-os').addEventListener('click', () => printOS());
+        document.getElementById('btn-duplicate-os').addEventListener('click', duplicateCurrentOS);
         document.getElementById('btn-nova-os').addEventListener('click', openModalForCreate);
         document.getElementById('btn-close-modal').addEventListener('click', closeModal);
         document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
