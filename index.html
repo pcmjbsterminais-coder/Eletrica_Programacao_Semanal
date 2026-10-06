@@ -623,37 +623,43 @@
             });
         }
 
-        async function saveOrderToCloud(osData) {
-            try {
-                const cleanData = { ...osData };
-                const docId = cleanData.id;
-                delete cleanData.id; // Remove o atributo ID para evitar poluição no documento do Firestore
+async function saveOrderToCloud(osData) {
+    try {
+        const cleanData = { ...osData };
+        const docId = cleanData.id;
+        delete cleanData.id; // Remove o ID para não poluir o documento no Firestore
 
-                if (docId && !docId.startsWith('local_')) {
-                    if (navigator.onLine) {
-                        await ordersRef.doc(docId).set(cleanData, { merge: true });
-                    }
-                    const idx = orders.findIndex(o => o.id === docId);
-                    if (idx !== -1) orders[idx] = { id: docId, ...cleanData };
-                } else {
-                    if (navigator.onLine) {
-                        const newDoc = await ordersRef.add(cleanData);
-                        orders.push({ id: newDoc.id, ...cleanData });
-                    } else {
-                        const tempId = 'local_' + Date.now();
-                        orders.push({ id: tempId, ...cleanData });
-                    }
-                }
+        if (docId && !docId.startsWith('local_')) {
+            if (navigator.onLine) {
+                // Atualiza o documento no Firestore; o listener onSnapshot atualizará o quadro
+                await ordersRef.doc(docId).set(cleanData, { merge: true });
+            } else {
+                // Atualização offline local
+                const idx = orders.findIndex(o => o.id === docId);
+                if (idx !== -1) orders[idx] = { id: docId, ...cleanData };
                 saveLocalOrders(orders);
                 renderBoard();
-                showToast("Ordem de serviço salva com sucesso!");
-            } catch (err) {
-                console.error("Erro ao salvar ordem:", err);
+            }
+        } else {
+            if (navigator.onLine) {
+                // Ao criar online, apenas envia ao Firestore. O onSnapshot receberá o novo item sem duplicar.
+                await ordersRef.add(cleanData);
+            } else {
+                // Inserção offline local
+                const tempId = 'local_' + Date.now();
+                orders.push({ id: tempId, ...cleanData });
                 saveLocalOrders(orders);
                 renderBoard();
-                showToast("Salvo localmente (offline)", "info");
             }
         }
+        showToast("Ordem de serviço salva com sucesso!");
+    } catch (err) {
+        console.error("Erro ao salvar ordem:", err);
+        saveLocalOrders(orders);
+        renderBoard();
+        showToast("Erro ao salvar ordem na nuvem", "danger");
+    }
+}
 
         async function deleteOrderFromCloud(id) {
             if (!id) return;
