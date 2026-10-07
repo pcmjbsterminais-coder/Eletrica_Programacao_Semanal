@@ -404,6 +404,7 @@
         ];
 
         const DAYS_CONFIG = [
+            { id: '', title: 'Backlog (Pendente)', short: 'BACKLOG' },
             { id: 'segunda', title: 'Segunda-feira', short: 'SEG' },
             { id: 'terca', title: 'Terça-feira', short: 'TER' },
             { id: 'quarta', title: 'Quarta-feira', short: 'QUA' },
@@ -849,12 +850,12 @@
 
             if (currentView === 'semanal') {
                 DAYS_CONFIG.forEach(day => {
-                    const colOrders = filteredOrders.filter(o => o.dia === day.id);
+                    const colOrders = filteredOrders.filter(o => (o.dia || '') === day.id);
                     container.innerHTML += `
                         <div class="w-80 flex-shrink-0 bg-slate-900/60 border border-slate-800/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
                             <div class="p-3 border-b border-slate-800 bg-slate-900 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
                                 <h2 class="font-bold text-slate-200 text-sm flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>${day.title}
+                                    <span class="w-2.5 h-2.5 rounded-full ${day.id === '' ? 'bg-amber-400' : 'bg-sky-400'}"></span>${day.title}
                                 </h2>
                                 <span class="text-xs bg-slate-800 text-slate-300 font-bold px-2.5 py-0.5 rounded-full border border-slate-700/80 shadow-sm">${colOrders.length} OS</span>
                             </div>
@@ -893,8 +894,8 @@
             const doneCheck = checklist.filter(c => c.done).length;
             const percentCheck = totalCheck > 0 ? Math.round((doneCheck / totalCheck) * 100) : 0;
             
-            const dayObj = DAYS_CONFIG.find(d => d.id === os.dia);
-            const badgeTag = tagDireita || (dayObj ? dayObj.short : 'N/A');
+            const dayObj = DAYS_CONFIG.find(d => d.id === (os.dia || ''));
+            const badgeTag = tagDireita || (dayObj ? dayObj.short : 'BACKLOG');
 
             const tecProgTexto = Array.isArray(os.tecnicoProgramado)
                 ? os.tecnicoProgramado.join(', ')
@@ -972,7 +973,7 @@
                     const id = e.dataTransfer.getData('text/plain');
                     const os = orders.find(o => o.id === id);
                     if (!os) return;
-                    if (zone.dataset.day) os.dia = zone.dataset.day;
+                    if (zone.dataset.day !== undefined) os.dia = zone.dataset.day;
                     if (zone.dataset.status) os.status = zone.dataset.status;
                     await saveOrderToCloud(os);
                 });
