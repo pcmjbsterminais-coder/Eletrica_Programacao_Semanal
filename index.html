@@ -716,6 +716,21 @@
             }
         }
 
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'concluido': return 'bg-emerald-950/80 text-emerald-400 border-emerald-600/80';
+                case 'andamento': return 'bg-sky-950/80 text-sky-400 border-sky-600/80';
+                case 'aguardando': return 'bg-amber-950/80 text-amber-400 border-amber-600/80';
+                case 'programado': return 'bg-indigo-950/80 text-indigo-300 border-indigo-600/80';
+                default: return 'bg-slate-800 text-slate-300 border-slate-600';
+            }
+        }
+
+        function getStatusLabel(status) {
+            const st = STATUS_CONFIG.find(s => s.id === status);
+            return st ? st.title : (status || 'Pendente');
+        }
+
         function getOSHomemHora(os) {
             const horasBase = parseFloat(os.horas) || 0;
             if (os.tecnicosExec && os.tecnicosExec.length > 0) {
@@ -901,6 +916,8 @@
                 ? os.tecnicoProgramado.join(', ')
                 : (os.tecnicoProgramado || '');
 
+            const isSemanal = currentView === 'semanal';
+
             return `
                 <div draggable="true" data-id="${os.id}" onclick="openModalForEdit('${os.id}')" class="os-card bg-[#111827] border border-slate-800 hover:border-sky-500/80 rounded-xl p-3.5 shadow-lg cursor-pointer group transition-all duration-200 hover:shadow-sky-950/20">
                     
@@ -914,32 +931,34 @@
                         <span class="truncate">${os.tag || 'Sem Tag / Área'}</span>
                     </div>
 
-                    <h3 class="text-xs font-extrabold text-white tracking-tight uppercase leading-snug mb-2 line-clamp-2">${os.titulo}</h3>
+                    <h3 class="text-xs font-extrabold text-white tracking-tight uppercase leading-snug ${isSemanal ? 'mb-3' : 'mb-2'} line-clamp-2">${os.titulo}</h3>
 
-                    ${tecProgTexto ? `
+                    ${!isSemanal && tecProgTexto ? `
                         <div class="flex items-center gap-1.5 text-xs font-medium text-amber-300/90 mb-2 bg-amber-950/30 border border-amber-800/40 px-2 py-1 rounded-md">
                             <i class="fa-solid fa-user-gear text-[11px] text-amber-400"></i>
                             <span class="truncate font-semibold">Téc. Prog: ${tecProgTexto}</span>
                         </div>
                     ` : ''}
 
-                    <div class="flex items-center justify-between text-xs text-slate-400 mb-2 bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/60">
-                        <span class="flex items-center gap-1.5 font-medium text-slate-300">
-                            <i class="fa-solid fa-users text-sky-400 text-[11px]"></i>
-                            <strong class="text-sky-300 font-bold">${tecsCount}</strong> Executante(s)
-                        </span>
-                        <span class="font-bold text-indigo-400 text-xs">
-                            <i class="fa-regular fa-clock text-[11px] mr-1"></i>${hhTotalOS.toFixed(1)} HH Total
-                        </span>
-                    </div>
+                    ${!isSemanal ? `
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2 bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/60">
+                            <span class="flex items-center gap-1.5 font-medium text-slate-300">
+                                <i class="fa-solid fa-users text-sky-400 text-[11px]"></i>
+                                <strong class="text-sky-300 font-bold">${tecsCount}</strong> Executante(s)
+                            </span>
+                            <span class="font-bold text-indigo-400 text-xs">
+                                <i class="fa-regular fa-clock text-[11px] mr-1"></i>${hhTotalOS.toFixed(1)} HH Total
+                            </span>
+                        </div>
+                    ` : ''}
 
-                    ${tecs.length > 0 ? `
+                    ${!isSemanal && tecs.length > 0 ? `
                         <div class="flex flex-wrap gap-1.5 mb-3">
                             ${tecs.map(t => `<span class="bg-slate-800/90 text-slate-200 text-[10px] font-medium px-2 py-0.5 rounded border border-slate-700/80"><i class="fa-solid fa-user-check text-[9px] text-emerald-400 mr-1"></i>${t.nome}</span>`).join('')}
                         </div>
                     ` : ''}
 
-                    ${totalCheck > 0 ? `
+                    ${!isSemanal && totalCheck > 0 ? `
                         <div class="mb-3 space-y-1">
                             <div class="flex justify-between text-[10px] font-semibold text-slate-400">
                                 <span>Checklist</span>
@@ -951,9 +970,15 @@
                         </div>
                     ` : ''}
 
-                    <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs gap-1">
                         <span class="${getTipoManutencaoColorClass(os.tipo)}">${os.tipo}</span>
-                        <span class="bg-slate-800 text-slate-300 border border-slate-700/80 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${badgeTag}</span>
+                        ${isSemanal ? `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border uppercase truncate ${getStatusBadgeClass(os.status)}">
+                                ${getStatusLabel(os.status)}
+                            </span>
+                        ` : `
+                            <span class="bg-slate-800 text-slate-300 border border-slate-700/80 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${badgeTag}</span>
+                        `}
                     </div>
 
                 </div>`;
