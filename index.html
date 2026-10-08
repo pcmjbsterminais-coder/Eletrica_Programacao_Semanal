@@ -311,9 +311,12 @@
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Status do Processo</label>
                     <select id="os-status" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
                         <option value="backlog">Backlog (Não Programado)</option>
-                        <option value="programado">Programado</option>
+                        <option value="prog_pcm">Programada PCM</option>
+                        <option value="prog_eletrica">Programada Elétrica</option>
                         <option value="andamento">Em Andamento</option>
                         <option value="aguardando">Aguardando Peças/Liberação</option>
+                        <option value="realizada_pcm">OS Realizada - PCM</option>
+                        <option value="realizada_eletrica">OS Realizada - Elétrica</option>
                         <option value="concluido">Concluído / Finalizado</option>
                     </select>
                 </div>
@@ -416,9 +419,12 @@
 
         const STATUS_CONFIG = [
             { id: 'backlog', title: 'Backlog (Pendente)', short: 'BACKLOG' },
-            { id: 'programado', title: 'Programado', short: 'PROG' },
+            { id: 'prog_pcm', title: 'Programada PCM', short: 'PROG. PCM' },
+            { id: 'prog_eletrica', title: 'Programada Elétrica', short: 'PROG. ELE' },
             { id: 'andamento', title: 'Em Andamento', short: 'ANDAM' },
             { id: 'aguardando', title: 'Aguardando Peças', short: 'AGUARD' },
+            { id: 'realizada_pcm', title: 'OS Realizada - PCM', short: 'REAL. PCM' },
+            { id: 'realizada_eletrica', title: 'OS Realizada - Elétrica', short: 'REAL. ELE' },
             { id: 'concluido', title: 'Concluído', short: 'CONC' }
         ];
 
@@ -697,38 +703,59 @@
 
         function getPriorityBadgeClass(p) {
             switch (p) {
-                case 'Crítica': return 'bg-rose-950/80 text-rose-400 border-rose-600/80';
-                case 'Alta': return 'bg-amber-950/80 text-amber-400 border-amber-600/80';
-                case 'Média': return 'bg-sky-950/80 text-sky-400 border-sky-600/80';
+                case 'Crítica': return 'bg-rose-950/80 text-rose-300 border-rose-600/80';
+                case 'Alta': return 'bg-amber-950/80 text-amber-300 border-amber-600/80';
+                case 'Média': return 'bg-sky-950/80 text-sky-300 border-sky-600/80';
                 default: return 'bg-slate-800 text-slate-300 border-slate-600';
             }
         }
 
         function getTipoManutencaoColorClass(tipo) {
             switch (tipo) {
-                case 'Corretiva': return 'text-rose-500 font-bold';
-                case 'Melhoria': return 'text-emerald-400 font-bold';
-                case 'Preventiva': return 'text-sky-400 font-bold';
-                case 'Preditiva': return 'text-purple-400 font-bold';
+                case 'Corretiva': return 'text-rose-300 font-bold';
+                case 'Melhoria': return 'text-emerald-300 font-bold';
+                case 'Preventiva': return 'text-sky-300 font-bold';
+                case 'Preditiva': return 'text-purple-300 font-bold';
                 case 'Inspeção':
-                case 'Inspeção/5S': return 'text-amber-400 font-bold';
-                default: return 'text-slate-300 font-semibold';
+                case 'Inspeção/5S': return 'text-amber-300 font-bold';
+                default: return 'text-slate-200 font-semibold';
+            }
+        }
+
+        function getStatusCardBgClass(status) {
+            switch (status) {
+                case 'prog_pcm': return 'bg-purple-900/90 border-purple-500/80 text-purple-100 shadow-purple-950/40 hover:border-purple-300';
+                case 'prog_eletrica': return 'bg-sky-900/90 border-sky-500/80 text-sky-100 shadow-sky-950/40 hover:border-sky-300';
+                case 'andamento': return 'bg-indigo-900/90 border-indigo-500/80 text-indigo-100 shadow-indigo-950/40 hover:border-indigo-300';
+                case 'aguardando': return 'bg-amber-900/90 border-amber-500/80 text-amber-100 shadow-amber-950/40 hover:border-amber-300';
+                case 'realizada_pcm': return 'bg-emerald-900/90 border-emerald-500/80 text-emerald-100 shadow-emerald-950/40 hover:border-emerald-300';
+                case 'realizada_eletrica': return 'bg-teal-900/90 border-teal-500/80 text-teal-100 shadow-teal-950/40 hover:border-teal-300';
+                case 'concluido': return 'bg-lime-900/90 border-lime-500/80 text-lime-100 shadow-lime-950/40 hover:border-lime-300';
+                case 'backlog':
+                default: return 'bg-slate-800/90 border-slate-600/80 text-slate-100 shadow-slate-950/40 hover:border-slate-400';
             }
         }
 
         function getStatusBadgeClass(status) {
             switch (status) {
-                case 'concluido': return 'bg-emerald-950/80 text-emerald-400 border-emerald-600/80';
-                case 'andamento': return 'bg-sky-950/80 text-sky-400 border-sky-600/80';
-                case 'aguardando': return 'bg-amber-950/80 text-amber-400 border-amber-600/80';
-                case 'programado': return 'bg-indigo-950/80 text-indigo-300 border-indigo-600/80';
-                default: return 'bg-slate-800 text-slate-300 border-slate-600';
+                case 'prog_pcm': return 'bg-purple-950/80 text-purple-200 border-purple-500/80';
+                case 'prog_eletrica': return 'bg-sky-950/80 text-sky-200 border-sky-500/80';
+                case 'andamento': return 'bg-indigo-950/80 text-indigo-200 border-indigo-500/80';
+                case 'aguardando': return 'bg-amber-950/80 text-amber-200 border-amber-500/80';
+                case 'realizada_pcm': return 'bg-emerald-950/80 text-emerald-200 border-emerald-500/80';
+                case 'realizada_eletrica': return 'bg-teal-950/80 text-teal-200 border-teal-500/80';
+                case 'concluido': return 'bg-lime-950/80 text-lime-200 border-lime-500/80';
+                default: return 'bg-slate-900/80 text-slate-200 border-slate-600';
             }
         }
 
         function getStatusLabel(status) {
             const st = STATUS_CONFIG.find(s => s.id === status);
             return st ? st.title : (status || 'Pendente');
+        }
+
+        function isStatusConcluido(status) {
+            return status === 'concluido' || status === 'realizada_pcm' || status === 'realizada_eletrica';
         }
 
         function getOSHomemHora(os) {
@@ -804,8 +831,8 @@
         function updateGlobalKPIs() {
             const filtered = getFilteredOrders();
             const totalProg = filtered.length;
-            const totalConc = filtered.filter(o => o.status === 'concluido').length;
-            const totalPend = filtered.filter(o => o.status !== 'concluido').length;
+            const totalConc = filtered.filter(o => isStatusConcluido(o.status)).length;
+            const totalPend = filtered.filter(o => !isStatusConcluido(o.status)).length;
             const totalHH = filtered.reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
             const aderencia = totalProg > 0 ? Math.round((totalConc / totalProg) * 100) : 0;
 
@@ -818,11 +845,11 @@
 
         function renderDaySummaryWidget(colOrders) {
             const prog = colOrders.length;
-            const conc = colOrders.filter(o => o.status === 'concluido').length;
-            const pend = colOrders.filter(o => o.status !== 'concluido').length;
+            const conc = colOrders.filter(o => isStatusConcluido(o.status)).length;
+            const pend = colOrders.filter(o => !isStatusConcluido(o.status)).length;
             
             const totalHH = colOrders.reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
-            const concHH = colOrders.filter(o => o.status === 'concluido').reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
+            const concHH = colOrders.filter(o => isStatusConcluido(o.status)).reduce((acc, curr) => acc + getOSHomemHora(curr), 0);
             const taxa = prog > 0 ? Math.round((conc / prog) * 100) : 0;
 
             return `
@@ -917,17 +944,22 @@
                 : (os.tecnicoProgramado || '');
 
             const isSemanal = currentView === 'semanal';
+            
+            // Define o fundo do card 100% com a cor do status no modo semanal
+            const cardBgClass = isSemanal 
+                ? getStatusCardBgClass(os.status) 
+                : 'bg-[#111827] border-slate-800 hover:border-sky-500/80 shadow-lg';
 
             return `
-                <div draggable="true" data-id="${os.id}" onclick="openModalForEdit('${os.id}')" class="os-card bg-[#111827] border border-slate-800 hover:border-sky-500/80 rounded-xl p-3.5 shadow-lg cursor-pointer group transition-all duration-200 hover:shadow-sky-950/20">
+                <div draggable="true" data-id="${os.id}" onclick="openModalForEdit('${os.id}')" class="os-card border rounded-xl p-3.5 shadow-lg cursor-pointer group transition-all duration-200 ${cardBgClass}">
                     
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-extrabold text-sky-400 tracking-wide font-mono">${os.numero}</span>
+                        <span class="text-xs font-extrabold ${isSemanal ? 'text-white' : 'text-sky-400'} tracking-wide font-mono">${os.numero}</span>
                         <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${getPriorityBadgeClass(os.prioridade)}">${os.prioridade}</span>
                     </div>
 
-                    <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-1">
-                        <i class="fa-solid fa-cube text-[11px] text-slate-500"></i>
+                    <div class="flex items-center gap-1.5 text-xs font-semibold ${isSemanal ? 'text-slate-200' : 'text-slate-400'} mb-1">
+                        <i class="fa-solid fa-cube text-[11px] ${isSemanal ? 'text-slate-300' : 'text-slate-500'}"></i>
                         <span class="truncate">${os.tag || 'Sem Tag / Área'}</span>
                     </div>
 
@@ -970,7 +1002,7 @@
                         </div>
                     ` : ''}
 
-                    <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs gap-1">
+                    <div class="pt-2 border-t ${isSemanal ? 'border-white/20' : 'border-slate-800/80'} flex items-center justify-between text-xs gap-1">
                         <span class="${getTipoManutencaoColorClass(os.tipo)}">${os.tipo}</span>
                         ${isSemanal ? `
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded border uppercase truncate ${getStatusBadgeClass(os.status)}">
@@ -1268,7 +1300,7 @@
                             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Tipo / Prioridade:</strong> ${os.tipo} / ${os.prioridade}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Status:</strong> ${os.status.toUpperCase()}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Status:</strong> ${getStatusLabel(os.status).toUpperCase()}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Total HH Usado:</strong> ${totalHH.toFixed(1)} HH (${os.horas}h prev/tec)</td>
                         </tr>
                     </table>
@@ -1328,7 +1360,7 @@
                 const tecs = (o.tecnicosExec || []).map(t => t.nome).join(' | ');
                 const totalHH = getOSHomemHora(o);
                 const tecProg = Array.isArray(o.tecnicoProgramado) ? o.tecnicoProgramado.join(' | ') : (o.tecnicoProgramado || '');
-                csv += `"${o.numero}";"${o.tag || ''}";"${tecProg}";"${o.titulo}";"${o.prioridade}";"${o.tipo}";"${o.status}";"${o.horas}";"${totalHH.toFixed(1)}";"${o.dia || ''}";"${tecs}"\n`;
+                csv += `"${o.numero}";"${o.tag || ''}";"${tecProg}";"${o.titulo}";"${o.prioridade}";"${o.tipo}";"${getStatusLabel(o.status)}";"${o.horas}";"${totalHH.toFixed(1)}";"${o.dia || ''}";"${tecs}"\n`;
             });
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
