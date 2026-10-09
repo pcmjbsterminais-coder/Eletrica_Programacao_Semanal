@@ -81,7 +81,7 @@
                                 </span>
                             </div>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5">Programação & Planejamento Semanal • Engenharia de Manutenção</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Gestão e Painel Integrado de Ordens de Serviço</p>
                     </div>
                 </div>
 
@@ -129,13 +129,41 @@
 
     <section class="bg-slate-900/80 border-b border-slate-800 px-4 py-3 sticky top-[69px] z-20 backdrop-blur-md no-print">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            <div class="flex p-1 bg-slate-950 rounded-lg border border-slate-800 self-start md:self-auto">
-                <button id="tab-semanal" class="px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow">
-                    <i class="fa-solid fa-calendar-week"></i> Agenda Semanal
-                </button>
-                <button id="tab-status" class="px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-list-check"></i> Visão por Status
-                </button>
+            
+            <!-- Controle de Visão e Seletor de Semanas -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex p-1 bg-slate-950 rounded-lg border border-slate-800">
+                    <button id="tab-semanal" class="px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow">
+                        <i class="fa-solid fa-calendar-week"></i> Agenda Semanal
+                    </button>
+                    <button id="tab-status" class="px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-list-check"></i> Visão por Status
+                    </button>
+                </div>
+
+                <!-- Seletor Rápido de Semana (Atual / Seguinte) -->
+                <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-xs gap-1">
+                    <button id="btn-prev-week" title="Semana Anterior" class="px-2 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    
+                    <button id="btn-this-week" class="px-2.5 py-1 rounded font-semibold transition bg-sky-600/30 text-sky-300 border border-sky-500/40">
+                        Esta Semana
+                    </button>
+                    
+                    <button id="btn-next-week" class="px-2.5 py-1 rounded font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800">
+                        Próxima Semana
+                    </button>
+                    
+                    <button id="btn-nav-next-week" title="Próxima Semana" class="px-2 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                    <div class="border-l border-slate-800 pl-2 pr-1 text-sky-400 font-bold font-mono text-xs flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar text-slate-400"></i>
+                        <span id="label-semana-atual">Semana --</span>
+                    </div>
+                </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 flex-1 max-w-3xl justify-end">
@@ -236,7 +264,7 @@
             <form id="form-os" class="p-5 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
                 <input type="hidden" id="os-id">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Nº OS / Código *</label>
                         <input type="text" id="os-numero" required placeholder="OS-2026-001" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
@@ -244,6 +272,10 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">Tag do Equipamento / Área</label>
                         <input type="text" id="os-tag" placeholder="ÁREA C / EQP-BOMBA-02" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Semana Programada *</label>
+                        <input type="week" id="os-semana" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                 </div>
 
@@ -484,6 +516,81 @@
         let isOnline = navigator.onLine;
         let visibleDays = ['', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
 
+        // LÓGICA DE GESTÃO DE SEMANAS ISO
+        let currentDateReference = new Date();
+
+        function getISOWeekAndYear(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            const year = d.getUTCFullYear();
+            const weekStr = String(weekNo).padStart(2, '0');
+            return { weekStr, year, isoString: `${year}-W${weekStr}`, weekNo };
+        }
+
+        function getWeekDateRange(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(d.setDate(diffToMon));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const format = dateObj => `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+            return `${format(monday)} a ${format(sunday)}`;
+        }
+
+        function updateWeekUI() {
+            const info = getISOWeekAndYear(currentDateReference);
+            const rangeStr = getWeekDateRange(currentDateReference);
+            
+            document.getElementById('label-semana-atual').textContent = `Semana ${info.weekNo} (${rangeStr})`;
+
+            const nowInfo = getISOWeekAndYear(new Date());
+            const nextWeekDate = new Date();
+            nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+            const nextInfo = getISOWeekAndYear(nextWeekDate);
+
+            const btnThis = document.getElementById('btn-this-week');
+            const btnNext = document.getElementById('btn-next-week');
+
+            if (info.isoString === nowInfo.isoString) {
+                btnThis.className = "px-2.5 py-1 rounded font-semibold transition bg-sky-600/30 text-sky-300 border border-sky-500/40";
+                btnNext.className = "px-2.5 py-1 rounded font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+            } else if (info.isoString === nextInfo.isoString) {
+                btnNext.className = "px-2.5 py-1 rounded font-semibold transition bg-sky-600/30 text-sky-300 border border-sky-500/40";
+                btnThis.className = "px-2.5 py-1 rounded font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+            } else {
+                btnThis.className = "px-2.5 py-1 rounded font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+                btnNext.className = "px-2.5 py-1 rounded font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+            }
+
+            renderBoard();
+        }
+
+        document.getElementById('btn-this-week').addEventListener('click', () => {
+            currentDateReference = new Date();
+            updateWeekUI();
+        });
+
+        document.getElementById('btn-next-week').addEventListener('click', () => {
+            currentDateReference = new Date();
+            currentDateReference.setDate(currentDateReference.getDate() + 7);
+            updateWeekUI();
+        });
+
+        document.getElementById('btn-prev-week').addEventListener('click', () => {
+            currentDateReference.setDate(currentDateReference.getDate() - 7);
+            updateWeekUI();
+        });
+
+        document.getElementById('btn-nav-next-week').addEventListener('click', () => {
+            currentDateReference.setDate(currentDateReference.getDate() + 7);
+            updateWeekUI();
+        });
+
         function toggleDayVisibility(dayId) {
             if (visibleDays.includes(dayId)) {
                 visibleDays = visibleDays.filter(d => d !== dayId);
@@ -505,7 +612,6 @@
             renderBoard();
         }
 
-        // Abrir e fechar menu dropdown de dias sem fechar ao clicar internamente
         const daysDropdownMenu = document.getElementById('days-dropdown-menu');
 
         document.getElementById('btn-toggle-days-menu').addEventListener('click', (e) => {
@@ -862,8 +968,13 @@
             const tecnico = document.getElementById('filter-tecnico').value;
             const prioridade = document.getElementById('filter-prioridade').value;
             const tipo = document.getElementById('filter-tipo').value;
+            const targetIsoWeek = getISOWeekAndYear(currentDateReference).isoString;
 
             return orders.filter(os => {
+                // Filtro Obrigatório de Semana
+                const osWeek = os.semana || getISOWeekAndYear(new Date()).isoString;
+                if (osWeek !== targetIsoWeek) return false;
+
                 const tecsString = (os.tecnicosExec || []).map(t => t.nome).join(' ').toLowerCase();
                 const tecProgString = Array.isArray(os.tecnicoProgramado) 
                     ? os.tecnicoProgramado.join(' ').toLowerCase()
@@ -1032,7 +1143,6 @@
 
             const isSemanal = currentView === 'semanal';
             
-            // Define o fundo do card 100% com a cor do status no modo semanal
             const cardBgClass = isSemanal 
                 ? getStatusCardBgClass(os.status) 
                 : 'bg-[#111827] border-slate-800 hover:border-sky-500/80 shadow-lg';
@@ -1226,6 +1336,9 @@
             
             renderProgrammedTechniciansCheckboxes([]);
             
+            // Define por padrão a semana visualizada atualmente
+            document.getElementById('os-semana').value = getISOWeekAndYear(currentDateReference).isoString;
+
             document.getElementById('select-tec-preset').value = '';
             document.getElementById('btn-delete-os').classList.add('hidden');
             document.getElementById('btn-print-os').classList.add('hidden');
@@ -1248,6 +1361,7 @@
             document.getElementById('os-id').value = os.id;
             document.getElementById('os-numero').value = os.numero;
             document.getElementById('os-tag').value = os.tag || '';
+            document.getElementById('os-semana').value = os.semana || getISOWeekAndYear(new Date()).isoString;
             
             renderProgrammedTechniciansCheckboxes(os.tecnicoProgramado || []);
             
@@ -1318,6 +1432,7 @@
                 id: id || null,
                 numero: document.getElementById('os-numero').value,
                 tag: document.getElementById('os-tag').value.trim(),
+                semana: document.getElementById('os-semana').value,
                 tecnicoProgramado: getSelectedProgrammedTechnicians(),
                 tecnicosExec: [...currentTecnicosExecucao],
                 titulo: document.getElementById('os-titulo').value,
@@ -1369,7 +1484,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 20px;">
                         <div>
                             <h1 style="margin: 0; color: #0284c7; font-size: 24px;">ORDEM DE SERVIÇO</h1>
-                            <p style="margin: 2px 0 0 0; color: #666;">PCM Pro - Relatório de Manutenção</p>
+                            <p style="margin: 2px 0 0 0; color: #666;">PCM Pro - Relatório de Manutenção (${os.semana || 'S/W'})</p>
                         </div>
                         <div style="text-align: right;">
                             <h2 style="margin: 0; font-size: 20px;">${os.numero}</h2>
@@ -1442,12 +1557,12 @@
                 showToast("Nenhuma OS disponível para exportar", "info");
                 return;
             }
-            let csv = 'Numero;Tag;Tecnico_Programado;Titulo;Prioridade;Tipo;Status;Horas_Previstas;Total_HH_Usado;Dia;Executantes\n';
+            let csv = 'Numero;Tag;Semana;Tecnico_Programado;Titulo;Prioridade;Tipo;Status;Horas_Previstas;Total_HH_Usado;Dia;Executantes\n';
             orders.forEach(o => {
                 const tecs = (o.tecnicosExec || []).map(t => t.nome).join(' | ');
                 const totalHH = getOSHomemHora(o);
                 const tecProg = Array.isArray(o.tecnicoProgramado) ? o.tecnicoProgramado.join(' | ') : (o.tecnicoProgramado || '');
-                csv += `"${o.numero}";"${o.tag || ''}";"${tecProg}";"${o.titulo}";"${o.prioridade}";"${o.tipo}";"${getStatusLabel(o.status)}";"${o.horas}";"${totalHH.toFixed(1)}";"${o.dia || ''}";"${tecs}"\n`;
+                csv += `"${o.numero}";"${o.tag || ''}";"${o.semana || ''}";"${tecProg}";"${o.titulo}";"${o.prioridade}";"${o.tipo}";"${getStatusLabel(o.status)}";"${o.horas}";"${totalHH.toFixed(1)}";"${o.dia || ''}";"${tecs}"\n`;
             });
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -1510,15 +1625,15 @@
 
         tabSemanal.addEventListener('click', () => {
             currentView = 'semanal';
-            tabSemanal.className = "px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
-            tabStatus.className = "px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
+            tabSemanal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
+            tabStatus.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
             renderBoard();
         });
 
         tabStatus.addEventListener('click', () => {
             currentView = 'status';
-            tabStatus.className = "px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
-            tabSemanal.className = "px-4 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
+            tabStatus.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
+            tabSemanal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
             renderBoard();
         });
 
@@ -1538,6 +1653,7 @@
         window.onload = function() {
             renderProgrammedTechniciansCheckboxes([]);
             updateConnectionUI(navigator.onLine);
+            updateWeekUI();
             initFirebaseRealtimeListener();
         };
     </script>
