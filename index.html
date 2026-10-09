@@ -139,6 +139,49 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 flex-1 max-w-3xl justify-end">
+                <!-- Seletor de Exibição de Dias -->
+                <div class="relative inline-block text-left">
+                    <button id="btn-toggle-days-menu" type="button" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 hover:border-sky-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye text-sky-400"></i>
+                        <span>Dias Visíveis</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+                    <div id="days-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 p-2 space-y-1">
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="" checked onchange="toggleDayVisibility('')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Backlog</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="segunda" checked onchange="toggleDayVisibility('segunda')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Segunda-feira</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="terca" checked onchange="toggleDayVisibility('terca')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Terça-feira</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="quarta" checked onchange="toggleDayVisibility('quarta')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Quarta-feira</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="quinta" checked onchange="toggleDayVisibility('quinta')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Quinta-feira</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="sexta" checked onchange="toggleDayVisibility('sexta')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Sexta-feira</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="sabado" checked onchange="toggleDayVisibility('sabado')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Sábado</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-800 rounded cursor-pointer text-xs text-slate-200">
+                            <input type="checkbox" value="domingo" checked onchange="toggleDayVisibility('domingo')" class="day-filter-cb rounded border-slate-700 bg-slate-950 text-sky-500">
+                            <span>Domingo</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="relative flex-1 min-w-[160px] max-w-xs">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                     <input type="text" id="filter-search" placeholder="Buscar OS, Tag, Atividade..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 placeholder-slate-500">
@@ -433,6 +476,26 @@
         let currentTecnicosExecucao = [];
         let currentTempChecklist = [];
         let isOnline = navigator.onLine;
+        let visibleDays = ['', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+
+        function toggleDayVisibility(dayId) {
+            if (visibleDays.includes(dayId)) {
+                visibleDays = visibleDays.filter(d => d !== dayId);
+            } else {
+                visibleDays.push(dayId);
+            }
+            renderBoard();
+        }
+
+        // Abrir e fechar menu dropdown de dias
+        document.getElementById('btn-toggle-days-menu').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('days-dropdown-menu').classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', () => {
+            document.getElementById('days-dropdown-menu').classList.add('hidden');
+        });
 
         function renderProgrammedTechniciansCheckboxes(selectedTecs = []) {
             const container = document.getElementById('tecnicos-programados-checkboxes');
@@ -891,7 +954,7 @@
             const filteredOrders = getFilteredOrders();
 
             if (currentView === 'semanal') {
-                DAYS_CONFIG.forEach(day => {
+                DAYS_CONFIG.filter(day => visibleDays.includes(day.id)).forEach(day => {
                     const colOrders = filteredOrders.filter(o => (o.dia || '') === day.id);
                     container.innerHTML += `
                         <div class="w-80 flex-shrink-0 bg-slate-900/60 border border-slate-800/80 rounded-xl flex flex-col max-h-[calc(100vh-160px)]">
