@@ -141,8 +141,8 @@
                     </button>
                 </div>
 
-                <!-- Seletor Rápido de Semana (Atual / Seguinte) -->
-                <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-xs gap-1">
+                <!-- Seletor Rápido de Semana (Exclusivo da Agenda Semanal) -->
+                <div id="week-selector-container" class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-xs gap-1">
                     <button id="btn-prev-week" title="Semana Anterior" class="px-2 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
@@ -971,9 +971,15 @@
             const targetIsoWeek = getISOWeekAndYear(currentDateReference).isoString;
 
             return orders.filter(os => {
-                // Filtro Obrigatório de Semana
-                const osWeek = os.semana || getISOWeekAndYear(new Date()).isoString;
-                if (osWeek !== targetIsoWeek) return false;
+                // Filtro de Semana APENAS se estiver na Agenda Semanal e a OS estiver programada para algum dia (que não seja Backlog)
+                if (currentView === 'semanal') {
+                    const osWeek = os.semana || getISOWeekAndYear(new Date()).isoString;
+                    const isBacklogItem = !os.dia || os.dia === '';
+                    // Se NÃO for backlog e a semana for diferente da selecionada, ignora
+                    if (!isBacklogItem && osWeek !== targetIsoWeek) {
+                        return false;
+                    }
+                }
 
                 const tecsString = (os.tecnicosExec || []).map(t => t.nome).join(' ').toLowerCase();
                 const tecProgString = Array.isArray(os.tecnicoProgramado) 
@@ -1227,8 +1233,17 @@
                     const id = e.dataTransfer.getData('text/plain');
                     const os = orders.find(o => o.id === id);
                     if (!os) return;
-                    if (zone.dataset.day !== undefined) os.dia = zone.dataset.day;
-                    if (zone.dataset.status) os.status = zone.dataset.status;
+
+                    // Se arrastar para um dia na agenda semanal, atualiza a semana da OS para a semana visualizada
+                    if (zone.dataset.day !== undefined) {
+                        os.dia = zone.dataset.day;
+                        if (os.dia !== '') {
+                            os.semana = getISOWeekAndYear(currentDateReference).isoString;
+                        }
+                    }
+                    if (zone.dataset.status) {
+                        os.status = zone.dataset.status;
+                    }
                     await saveOrderToCloud(os);
                 });
             });
@@ -1622,11 +1637,13 @@
 
         const tabSemanal = document.getElementById('tab-semanal');
         const tabStatus = document.getElementById('tab-status');
+        const weekSelectorContainer = document.getElementById('week-selector-container');
 
         tabSemanal.addEventListener('click', () => {
             currentView = 'semanal';
             tabSemanal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
             tabStatus.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
+            weekSelectorContainer.classList.remove('hidden');
             renderBoard();
         });
 
@@ -1634,6 +1651,7 @@
             currentView = 'status';
             tabStatus.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 bg-sky-600 text-white shadow";
             tabSemanal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition flex items-center gap-2 text-slate-400 hover:text-white";
+            weekSelectorContainer.classList.add('hidden');
             renderBoard();
         });
 
